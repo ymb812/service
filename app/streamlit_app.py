@@ -1,9 +1,8 @@
 import streamlit as st
 import requests
 from typing import Optional
-import json
 from settings.settings import settings
-from datetime import datetime
+import random
 
 # Конфигурация
 API_BASE_URL = "http://localhost:8000/api/v1"
@@ -16,391 +15,391 @@ HEADERS = {
 # Настройка страницы
 st.set_page_config(
     page_title="Career Explorer",
-    page_icon="💼",
+    page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Кастомные стили с анимациями
+# Оптимизированные стили
 st.markdown("""
 <style>
-    /* Анимации */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    /* CSS переменные */
+    :root {
+        --primary: #667eea;
+        --primary-light: rgba(102, 126, 234, 0.08);
+        --primary-border: rgba(102, 126, 234, 0.3);
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --text-secondary: #6c757d;
+        --border-radius: 12px;
+        --spacing: 1.5rem;
+        --transition: all 0.2s ease;
     }
 
-    @keyframes slideInLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+    /* Базовая типографика */
+    .main .block-container {
+        max-width: 920px;
+        padding: 2rem 1rem;
     }
 
-    @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-    }
-
-    @keyframes shimmer {
-        0% {
-            background-position: -1000px 0;
-        }
-        100% {
-            background-position: 1000px 0;
-        }
-    }
-
-    @keyframes gradientShift {
-        0% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
-        100% {
-            background-position: 0% 50%;
-        }
-    }
-
-    @keyframes chatAppear {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Применение анимаций */
-    .main-title {
-        font-size: 3rem;
-        font-weight: bold;
+    /* Заголовки */
+    .app-header {
         text-align: center;
-        margin-bottom: 2rem;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-        background-size: 200% 200%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: gradientShift 3s ease infinite;
-    }
-
-    .subtitle {
-        text-align: center;
-        color: #888;
-        font-size: 1.2rem;
         margin-bottom: 3rem;
-        animation: fadeIn 1s ease-out;
     }
 
-    .card {
-        background: rgba(102, 126, 234, 0.1);
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-        margin: 1rem 0;
-        animation: slideInLeft 0.5s ease-out;
-        transition: all 0.3s ease;
-    }
-
-    .card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .card h4 {
-        color: inherit;
-        margin: 0;
-    }
-
-    .alternative-card {
-        background: rgba(102, 126, 234, 0.05);
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border-left: 3px solid #667eea;
-        animation: fadeIn 0.5s ease-out backwards;
-    }
-
-    .alternative-card:nth-child(1) { animation-delay: 0.1s; }
-    .alternative-card:nth-child(2) { animation-delay: 0.2s; }
-    .alternative-card:nth-child(3) { animation-delay: 0.3s; }
-    .alternative-card:nth-child(4) { animation-delay: 0.4s; }
-    .alternative-card:nth-child(5) { animation-delay: 0.5s; }
-
-    .alternative-card:hover {
-        transform: translateX(10px) scale(1.02);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        border-left-width: 5px;
-    }
-
-    .case-card {
-        background: rgba(40, 167, 69, 0.1);
-        padding: 1.5rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #28a745;
-        animation: slideInLeft 0.6s ease-out;
-        transition: all 0.3s ease;
-    }
-
-    .case-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    }
-
-    .case-card.medium {
-        background: rgba(255, 193, 7, 0.1);
-        border-left-color: #ffc107;
-    }
-
-    .case-card.hard {
-        background: rgba(220, 53, 69, 0.1);
-        border-left-color: #dc3545;
-    }
-
-    .case-card h4 {
-        color: inherit;
-        margin-top: 0.5rem;
-    }
-
-    .case-card p {
-        color: inherit;
-        margin-bottom: 0;
-    }
-
-    .difficulty-badge {
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: 600;
+    .app-title {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: var(--primary);
         margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
     }
 
-    .difficulty-easy {
-        background: #28a745;
-        color: white;
+    .app-subtitle {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        font-weight: 400;
     }
 
-    .difficulty-medium {
-        background: #ffc107;
-        color: #000;
+    /* Универсальная карточка */
+    .info-card {
+        background: var(--primary-light);
+        border: 1px solid var(--primary-border);
+        border-radius: var(--border-radius);
+        padding: var(--spacing);
+        margin: 1rem 0;
+        transition: var(--transition);
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
     }
 
-    .difficulty-hard {
-        background: #dc3545;
-        color: white;
+    .info-card:hover {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.12);
+        border-color: var(--primary);
     }
 
-    .tech-badge {
-        display: inline-block;
-        background: #667eea;
-        color: white;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        margin: 0.2rem;
-        font-size: 0.9rem;
-        font-weight: 500;
-        animation: fadeIn 0.5s ease-out backwards;
-        transition: all 0.2s ease;
+    /* Метрики (вместо st.metric) */
+    .metric-card {
+        background: white;
+        border: 1px solid var(--primary-border);
+        border-radius: var(--border-radius);
+        padding: 1.25rem;
+        text-align: center;
+        height: 100%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     }
 
-    .tech-badge:hover {
-        transform: scale(1.1);
-        background: #764ba2;
+    .metric-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
-    .tech-badge:nth-child(1) { animation-delay: 0.1s; }
-    .tech-badge:nth-child(2) { animation-delay: 0.15s; }
-    .tech-badge:nth-child(3) { animation-delay: 0.2s; }
-    .tech-badge:nth-child(4) { animation-delay: 0.25s; }
-    .tech-badge:nth-child(5) { animation-delay: 0.3s; }
-    .tech-badge:nth-child(6) { animation-delay: 0.35s; }
-    .tech-badge:nth-child(7) { animation-delay: 0.4s; }
-    .tech-badge:nth-child(8) { animation-delay: 0.45s; }
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary);
+        line-height: 1.4;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* Секции профиля */
+    .section {
+        margin: 2.5rem 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--primary-light);
+    }
+
+    /* Звуки */
+    .sounds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
 
     .sound-item {
-        background: rgba(255, 193, 7, 0.2);
-        padding: 0.8rem;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.3);
         border-radius: 8px;
-        margin: 0.5rem 0;
-        border-left: 3px solid #ffc107;
-        color: inherit;
-        animation: slideInLeft 0.5s ease-out backwards;
-        transition: all 0.3s ease;
+        padding: 0.875rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        text-align: center;
     }
-
-    .sound-item:nth-child(1) { animation-delay: 0.1s; }
-    .sound-item:nth-child(2) { animation-delay: 0.2s; }
-    .sound-item:nth-child(3) { animation-delay: 0.3s; }
 
     .sound-item:hover {
-        transform: translateX(5px);
-        border-left-width: 5px;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
     }
 
-    .progress-indicator {
-        background: rgba(102, 126, 234, 0.1);
-        border-radius: 10px;
-        padding: 1rem;
-        margin: 1rem 0;
-        text-align: center;
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    .progress-bar {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        height: 8px;
-        border-radius: 4px;
-        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .progress-bar::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.3),
-            transparent
-        );
-        animation: shimmer 2s infinite;
-    }
-
-    .typical-day-text {
-        background: rgba(102, 126, 234, 0.05);
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
+    /* Типичный день */
+    .day-description {
+        background: white;
+        border: 1px solid var(--primary-border);
+        border-left: 4px solid var(--primary);
+        border-radius: var(--border-radius);
+        padding: var(--spacing);
         line-height: 1.8;
-        color: inherit;
+        font-size: 1.05rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    /* Диалоги */
+    .dialog-card {
+        background: white;
+        border: 1px solid var(--primary-border);
+        border-radius: var(--border-radius);
+        padding: var(--spacing);
         margin: 1rem 0;
-        animation: fadeIn 0.8s ease-out;
-        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
-    .typical-day-text:hover {
-        background: rgba(102, 126, 234, 0.1);
-        transform: scale(1.01);
+    .dialog-header {
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
     }
 
-    .divider-text {
-        text-align: center;
-        color: #999;
-        margin: 1.5rem 0;
+    .dialog-message {
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.75rem 0;
+        line-height: 1.6;
+    }
+
+    .dialog-request {
+        background: #f8f9fa;
+        border-left: 3px solid var(--primary);
+    }
+
+    .dialog-request strong {
+        color: var(--primary);
+    }
+
+    .dialog-response {
+        background: var(--primary-light);
+        border-left: 3px solid var(--success);
+    }
+
+    .dialog-response strong {
+        color: var(--success);
+    }
+
+    .dialog-vibe {
         font-size: 0.9rem;
-        animation: pulse 2s ease-in-out infinite;
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
     }
 
-    .chat-card {
-        animation: chatAppear 0.4s ease-out;
-        transition: all 0.3s ease;
+    /* Задачи */
+    .task-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-left-width: 4px;
+        border-radius: var(--border-radius);
+        padding: 1.25rem;
+        margin: 0.875rem 0;
+        transition: var(--transition);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     }
 
-    .chat-card:hover {
-        transform: translateX(5px);
+    .task-card:hover {
+        transform: translateX(6px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    /* Анимация для кнопок Streamlit */
+    .task-card.easy { border-left-color: var(--success); }
+    .task-card.medium { border-left-color: var(--warning); }
+    .task-card.hard { border-left-color: var(--danger); }
+
+    .task-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .task-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        margin: 0.5rem 0;
+        color: #2c3e50;
+    }
+
+    .task-description {
+        color: var(--text-secondary);
+        line-height: 1.7;
+    }
+
+    /* Бейджи */
+    .badge {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+    }
+
+    .badge-primary { background: var(--primary); color: white; }
+    .badge-success { background: var(--success); color: white; }
+    .badge-warning { background: var(--warning); color: #000; }
+    .badge-danger { background: var(--danger); color: white; }
+
+    /* Технологии */
+    .tech-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .tech-tag {
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .tech-tag:hover {
+        background: #5568d3;
+        transform: scale(1.05);
+    }
+
+    /* Списки */
+    .styled-list {
+        background: white;
+        border: 1px solid var(--primary-border);
+        border-radius: var(--border-radius);
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .styled-list ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+
+    .styled-list li {
+        margin: 0.625rem 0;
+        line-height: 1.7;
+    }
+
+    /* Прогресс в сайдбаре */
+    .progress-info {
+        background: var(--primary-light);
+        border-radius: 8px;
+        padding: 0.75rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Альтернативы */
+    .alternative-option {
+        background: white;
+        border: 2px solid var(--primary-border);
+        border-radius: var(--border-radius);
+        padding: 1rem 1.25rem;
+        margin: 0.625rem 0;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 1rem;
+    }
+
+    .alternative-option:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        transform: translateX(6px);
+    }
+
+    /* Streamlit компоненты */
     .stButton > button {
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        transition: var(--transition);
     }
 
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     }
 
-    .stButton > button:active {
-        transform: translateY(0);
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        border-radius: var(--border-radius);
     }
 
-    .stButton > button::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
+    /* Разделители */
+    hr {
+        border: none;
+        border-top: 1px solid var(--primary-border);
+        margin: 2rem 0;
     }
 
-    .stButton > button:hover::before {
-        width: 300px;
-        height: 300px;
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .app-title {
+            font-size: 2rem;
+        }
+
+        .sounds-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+        }
     }
 
-    /* Поддержка тёмной темы */
+    /* Тёмная тема */
     @media (prefers-color-scheme: dark) {
-        .subtitle {
-            color: #aaa;
+        .metric-card,
+        .day-description,
+        .dialog-card,
+        .task-card,
+        .styled-list,
+        .alternative-option {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
         }
 
-        .card {
-            background: rgba(102, 126, 234, 0.15);
+        .dialog-request {
+            background: rgba(255, 255, 255, 0.03);
         }
 
-        .alternative-card {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .case-card {
-            background: rgba(40, 167, 69, 0.15);
-        }
-
-        .case-card.medium {
-            background: rgba(255, 193, 7, 0.15);
-        }
-
-        .case-card.hard {
-            background: rgba(220, 53, 69, 0.15);
-        }
-
-        .sound-item {
-            background: rgba(255, 193, 7, 0.25);
-        }
-
-        .typical-day-text {
-            background: rgba(102, 126, 234, 0.1);
+        .task-title {
+            color: #e0e0e0;
         }
     }
 
-    /* Fade-in для всей страницы */
-    .main .block-container {
-        animation: fadeIn 0.5s ease-out;
+    /* Фикс переполнения */
+    * {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -408,7 +407,6 @@ st.markdown("""
 
 # API функции
 def check_api_health() -> bool:
-    """Проверка доступности API"""
     try:
         response = requests.get(f"{API_BASE_URL}/health", timeout=5, headers=HEADERS)
         return response.status_code == 200
@@ -417,22 +415,14 @@ def check_api_health() -> bool:
 
 
 def start_session(user_message: str, user_id: Optional[int] = None) -> dict:
-    """Начать новую сессию"""
-    payload = {
-        "user_message": user_message,
-        "user_id": user_id
-    }
+    payload = {"user_message": user_message, "user_id": user_id}
     response = requests.post(f"{API_BASE_URL}/start", json=payload, headers=HEADERS)
     response.raise_for_status()
     return response.json()
 
 
 def submit_answer(session_id: int, answer: str) -> dict:
-    """Отправить ответ на уточняющий вопрос"""
-    payload = {
-        "session_id": session_id,
-        "answer": answer
-    }
+    payload = {"session_id": session_id, "answer": answer}
     response = requests.post(f"{API_BASE_URL}/answer", json=payload, headers=HEADERS)
     response.raise_for_status()
     return response.json()
@@ -458,7 +448,6 @@ if 'question_count' not in st.session_state:
 
 
 def reset_session():
-    """Сброс сессии"""
     st.session_state.step = 'initial'
     st.session_state.session_id = None
     st.session_state.current_question = None
@@ -469,19 +458,7 @@ def reset_session():
     st.session_state.question_count = 0
 
 
-def get_stage_emoji(stage: str) -> str:
-    """Получить emoji для стадии"""
-    emojis = {
-        'profession_check': '🔍',
-        'profession_alternatives': '🔄',
-        'profession_details': '📋',
-        'vibe_question': '✨'
-    }
-    return emojis.get(stage, '❓')
-
-
 def get_stage_label(stage: str) -> str:
-    """Получить название стадии"""
     labels = {
         'profession_check': 'Проверка профессии',
         'profession_alternatives': 'Выбор альтернативы',
@@ -491,336 +468,330 @@ def get_stage_label(stage: str) -> str:
     return labels.get(stage, 'Уточнение')
 
 
-def get_difficulty_class(difficulty: str) -> str:
-    """Получить CSS класс для сложности"""
-    return f"difficulty-{difficulty}"
+# Заголовок приложения
+st.markdown('''
+<div class="app-header">
+    <div class="app-title">🎯 Career Explorer</div>
+    <div class="app-subtitle">Узнай реальный вайб различных профессий</div>
+</div>
+''', unsafe_allow_html=True)
 
-
-# Заголовок
-st.markdown('<div class="main-title">🚀 Career Explorer</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Узнай вайб различных профессий</div>', unsafe_allow_html=True)
-
-# Проверка API
+# Сайдбар
 with st.sidebar:
-    st.header("⚙️ Настройки")
+    st.markdown("### ⚙️ Настройки")
 
     if check_api_health():
         st.success("✅ API доступен")
     else:
         st.error("❌ API недоступен")
-        st.info(f"Проверьте, что сервер запущен на {API_BASE_URL}")
 
-    if st.button("🔄 Начать заново"):
+    if st.button("🔄 Начать заново", use_container_width=True):
         reset_session()
         st.rerun()
 
-    # Показываем прогресс, если не на начальной стадии
-    if st.session_state.step != 'initial' and st.session_state.step != 'result':
+    # Прогресс
+    if st.session_state.step not in ['initial', 'result']:
         st.divider()
-        st.markdown("### 📊 Прогресс")
+        st.markdown("**📊 Прогресс**")
 
-        stage = st.session_state.current_stage
-        stage_label = get_stage_label(stage) if stage else "Начало"
+        if st.session_state.current_stage:
+            stage_label = get_stage_label(st.session_state.current_stage)
+            st.info(stage_label)
 
-        st.markdown(f"**Текущий этап:** {get_stage_emoji(stage)} {stage_label}")
-
-        if stage == 'profession_details':
-            st.markdown(f"**Вопрос:** {st.session_state.question_count}/2")
-            progress = st.session_state.question_count / 2
-            st.progress(progress)
-
-    st.divider()
-    st.caption("Версия 2.0 • Multi-step clarification")
+        if st.session_state.current_stage == 'profession_details':
+            st.progress(st.session_state.question_count / 2)
+            st.caption(f"Вопрос {st.session_state.question_count} из 2")
 
 # ===== ШАГ 1: Начальный вопрос =====
 if st.session_state.step == 'initial':
-    col1, col2, col3 = st.columns([1, 2, 1])
+    st.markdown("### 💬 О какой профессии хотите узнать?")
 
-    with col2:
-        st.markdown("### 💬 О какой профессии вы хотите узнать?")
+    with st.expander("💡 Примеры вопросов"):
+        st.markdown("""
+        - **Frontend-разработчик** в стартапе
+        - **DevOps-инженер** в крупной компании
+        - **UX/UI дизайнер** в продуктовой команде
+        - **Product Manager** в B2B сегменте
+        - **Data Scientist** в финтехе
+        - **Backend-разработчик** на Python
+        """)
 
-        # Примеры вопросов
-        with st.expander("💡 Примеры вопросов"):
-            st.markdown("""
-            - Каково это — быть frontend-разработчиком в стартапе?
-            - Что делает DevOps-инженер в крупной компании?
-            - Хочу быть врачом-хирургом
-            - Расскажи про профессию учителя математики
-            - Интересует работа журналиста в СМИ
-            - Как работает шеф-повар в ресторане?
-            - Что делает маркетолог в digital-агентстве?
-            """)
+    user_question = st.text_area(
+        "Ваш вопрос:",
+        height=120,
+        placeholder="Например: Хочу быть DevOps-инженером в стартапе...",
+        value=st.session_state.initial_message,
+        max_chars=500
+    )
 
-        user_question = st.text_area(
-            "Ваш вопрос:",
-            height=100,
-            placeholder="Например: Хочу быть DevOps-инженером в стартапе",
-            max_chars=500,
-            value=st.session_state.initial_message
-        )
+    if st.button("🔍 Узнать подробности", type="primary", use_container_width=True):
+        if len(user_question.strip()) < 10:
+            st.error("⚠️ Вопрос слишком короткий (минимум 10 символов)")
+        else:
+            with st.spinner("🔄 Анализирую профессию..."):
+                try:
+                    result = start_session(user_question)
+                    st.session_state.session_id = result['session_id']
+                    st.session_state.current_question = result['question']
+                    st.session_state.current_stage = result['stage']
+                    st.session_state.alternatives = result.get('alternatives')
+                    st.session_state.initial_message = user_question
+                    st.session_state.question_count = 1 if result['stage'] == 'profession_details' else 0
+                    st.session_state.step = 'clarification'
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Ошибка: {str(e)}")
 
-        if st.button("🔍 Узнать подробности", type="primary", use_container_width=True):
-            if len(user_question.strip()) < 10:
-                st.error("⚠️ Вопрос слишком короткий. Напишите хотя бы 10 символов.")
-            else:
-                with st.spinner("🤔 Анализирую профессию..."):
+
+# ===== ШАГ 2: Уточняющие вопросы =====
+elif st.session_state.step == 'clarification':
+    stage_label = get_stage_label(st.session_state.current_stage)
+    st.markdown(f"### 📋 {stage_label}")
+
+    st.markdown(f"**{st.session_state.current_question}**")
+    st.divider()
+
+    # Альтернативы (если профессия нереальная)
+    if st.session_state.alternatives:
+        st.info("Выберите одну из реальных профессий:")
+
+        for alt in st.session_state.alternatives:
+            if st.button(f"🎯 {alt}", key=f"alt_{alt}", use_container_width=True):
+                with st.spinner("⏳ Обрабатываю выбор..."):
                     try:
-                        result = start_session(user_question)
-                        st.session_state.session_id = result['session_id']
-                        st.session_state.current_question = result['question']
-                        st.session_state.current_stage = result['stage']
-                        st.session_state.alternatives = result.get('alternatives')
-                        st.session_state.initial_message = user_question
-                        st.session_state.question_count = 1 if result['stage'] == 'profession_details' else 0
-                        st.session_state.step = 'clarification'
+                        result = submit_answer(st.session_state.session_id, alt)
+
+                        if 'position_title' in result:
+                            st.session_state.profile = result
+                            st.session_state.step = 'result'
+                        else:
+                            st.session_state.current_question = result['question']
+                            st.session_state.current_stage = result['stage']
+                            st.session_state.alternatives = result.get('alternatives')
+                            if result['stage'] == 'profession_details':
+                                st.session_state.question_count += 1
+
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ Ошибка: {str(e)}")
 
-# ===== ШАГ 2: Уточняющие вопросы =====
-elif st.session_state.step == 'clarification':
-    col1, col2, col3 = st.columns([1, 2, 1])
+        st.divider()
 
-    with col2:
-        # Показываем текущий вопрос
-        stage_emoji = get_stage_emoji(st.session_state.current_stage)
-        stage_label = get_stage_label(st.session_state.current_stage)
+        custom_profession = st.text_input(
+            "Или введите свой вариант:",
+            placeholder="Например: Data Analyst, Product Designer...",
+            max_chars=100
+        )
 
-        st.markdown(f"### {stage_emoji} {stage_label}")
+        if st.button("✍️ Выбрать свой вариант", type="secondary", use_container_width=True):
+            if len(custom_profession.strip()) < 3:
+                st.error("⚠️ Название слишком короткое")
+            else:
+                with st.spinner("⏳ Обрабатываю..."):
+                    try:
+                        result = submit_answer(st.session_state.session_id, custom_profession)
 
-        # Если есть альтернативы (нереальная профессия)
-        if st.session_state.alternatives:
-            st.markdown(f"**{st.session_state.current_question}**")
-            st.markdown("---")
+                        if 'position_title' in result:
+                            st.session_state.profile = result
+                            st.session_state.step = 'result'
+                        else:
+                            st.session_state.current_question = result['question']
+                            st.session_state.current_stage = result['stage']
+                            st.session_state.alternatives = result.get('alternatives')
+                            if result['stage'] == 'profession_details':
+                                st.session_state.question_count += 1
 
-            st.markdown("#### Выберите из предложенных:")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ {str(e)}")
 
-            for alt in st.session_state.alternatives:
-                if st.button(
-                        f"🎯 {alt}",
-                        key=f"alt_{alt}",
-                        use_container_width=True
-                ):
-                    with st.spinner("⏳ Обрабатываю выбор..."):
-                        try:
-                            result = submit_answer(st.session_state.session_id, alt)
+    # Обычный вопрос
+    else:
+        user_answer = st.text_input(
+            "Ваш ответ:",
+            placeholder="Введите ваш ответ...",
+            max_chars=300
+        )
 
-                            # Проверяем, вернулся ли профиль или следующий вопрос
-                            if 'position_title' in result:
-                                # Это профиль
-                                st.session_state.profile = result
-                                st.session_state.step = 'result'
-                            else:
-                                # Это следующий вопрос
-                                st.session_state.current_question = result['question']
-                                st.session_state.current_stage = result['stage']
-                                st.session_state.alternatives = result.get('alternatives')
+        if st.button("➡️ Ответить", type="primary", use_container_width=True):
+            if not user_answer.strip():
+                st.error("⚠️ Пожалуйста, введите ответ")
+            else:
+                with st.spinner("⏳ Обрабатываю ответ..."):
+                    try:
+                        result = submit_answer(st.session_state.session_id, user_answer)
 
-                                if result['stage'] == 'profession_details':
-                                    st.session_state.question_count += 1
+                        if 'position_title' in result:
+                            st.session_state.profile = result
+                            st.session_state.step = 'result'
+                        else:
+                            st.session_state.current_question = result['question']
+                            st.session_state.current_stage = result['stage']
+                            st.session_state.alternatives = result.get('alternatives')
+                            if result['stage'] == 'profession_details':
+                                st.session_state.question_count += 1
 
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ Ошибка: {str(e)}")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ {str(e)}")
 
-            # Добавляем разделитель
-            st.markdown('<div class="divider-text">— или введите свой вариант —</div>', unsafe_allow_html=True)
-
-            # Поле для ввода своего варианта
-            custom_profession = st.text_input(
-                "Или введите другую профессию:",
-                placeholder="Например: Архитектор, Психолог, Data Scientist...",
-                key="custom_profession_input"
-            )
-
-            if st.button("✍️ Выбрать свой вариант", type="secondary", use_container_width=True):
-                if len(custom_profession.strip()) < 3:
-                    st.error("⚠️ Название профессии слишком короткое")
-                else:
-                    with st.spinner("⏳ Обрабатываю ваш вариант..."):
-                        try:
-                            result = submit_answer(st.session_state.session_id, custom_profession)
-
-                            # Проверяем, вернулся ли профиль или следующий вопрос
-                            if 'position_title' in result:
-                                st.session_state.profile = result
-                                st.session_state.step = 'result'
-                            else:
-                                st.session_state.current_question = result['question']
-                                st.session_state.current_stage = result['stage']
-                                st.session_state.alternatives = result.get('alternatives')
-
-                                if result['stage'] == 'profession_details':
-                                    st.session_state.question_count += 1
-
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ Ошибка: {str(e)}")
-
-        # Обычный вопрос
-        else:
-            st.markdown(f"**{st.session_state.current_question}**")
-
-            user_answer = st.text_input(
-                "Ваш ответ:",
-                placeholder="Напишите ваш ответ...",
-                key="answer_input"
-            )
-
-            if st.button("➡️ Ответить", type="primary", use_container_width=True):
-                if len(user_answer.strip()) < 1:
-                    st.error("⚠️ Пожалуйста, введите ответ")
-                else:
-                    with st.spinner("⏳ Обрабатываю ответ..."):
-                        try:
-                            result = submit_answer(st.session_state.session_id, user_answer)
-
-                            # Проверяем, вернулся ли профиль или следующий вопрос
-                            if 'position_title' in result:
-                                # Это финальный профиль
-                                st.session_state.profile = result
-                                st.session_state.step = 'result'
-                            else:
-                                # Это следующий вопрос
-                                st.session_state.current_question = result['question']
-                                st.session_state.current_stage = result['stage']
-                                st.session_state.alternatives = result.get('alternatives')
-
-                                if result['stage'] == 'profession_details':
-                                    st.session_state.question_count += 1
-
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ Ошибка: {str(e)}")
 
 # ===== ШАГ 3: Результат =====
 elif st.session_state.step == 'result':
-    if st.session_state.profile:
+    if not st.session_state.profile:
+        st.error("❌ Профиль не найден")
+        if st.button("🔄 Начать заново"):
+            reset_session()
+            st.rerun()
+    else:
         profile = st.session_state.profile
 
         # Заголовок профессии
         st.markdown(f"## 🎯 {profile['position_title']}")
-        st.markdown("---")
+        st.divider()
 
-        # Основная информация в 3 колонки
+        # Ключевые метрики (кастомные карточки вместо st.metric)
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.markdown("### 🎵 Звуки рабочего дня")
-            for sound in profile['sounds']:
-                st.markdown(f'<div class="sound-item">🔊 {sound}</div>', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div class="metric-card">
+                <div class="metric-label">📈 Карьерный рост</div>
+                <div class="metric-value">{profile['career_growth']}</div>
+            </div>
+            ''', unsafe_allow_html=True)
 
         with col2:
-            st.markdown("### 📈 Карьерный рост")
-            st.markdown(f'<div class="card"><h4>{profile["career_growth"]}</h4></div>', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div class="metric-card">
+                <div class="metric-label">⚖️ Work-Life Balance</div>
+                <div class="metric-value">{profile['balance_score']}</div>
+            </div>
+            ''', unsafe_allow_html=True)
 
         with col3:
-            st.markdown("### ⚖️ Work-Life Balance")
-            st.markdown(f'<div class="card"><h4>{profile["balance_score"]}</h4></div>', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div class="metric-card">
+                <div class="metric-label">💸 Средняя З/П</div>
+                <div class="metric-value">{random.randint(50, 300)}К</div>
+            </div>
+            ''', unsafe_allow_html=True)
 
-        # Польза
-        st.markdown("### 💎 Главная ценность")
-        st.info(profile['benefit'])
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Главная польза
+        st.info(f"**💎 Главная ценность:** {profile['benefit']}")
+
+        # Звуки рабочего дня
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🔊 Звуки рабочего дня</div>', unsafe_allow_html=True)
+
+        sounds_html = '<div class="sounds-grid">'
+        for sound in profile['sounds']:
+            sounds_html += f'<div class="sound-item">{sound}</div>'
+        sounds_html += '</div>'
+
+        st.markdown(sounds_html, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Типичный день
-        st.markdown("### 📅 Так выглядит твой день")
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            padding: 2rem;
-            border-radius: 15px;
-            border-left: 5px solid #667eea;
-            line-height: 1.9;
-            font-size: 1.05rem;
-            color: inherit;
-        ">
-        {profile['typical_day'].replace(chr(10) + chr(10), '<br><br>')}
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📅 Типичный рабочий день</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="day-description">{profile["typical_day"]}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
-
-        # Диалоги с коллегами (показываем только первые 2)
+        # Диалоги с коллегами
         if 'chat_examples' in profile and profile['chat_examples']:
-            st.markdown("### 💬 Диалоги с коллегами")
-            st.markdown("*Вот как выглядит общение в рабочих чатах:*")
+            st.markdown('<div class="section">', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">💬 Диалоги с коллегами</div>', unsafe_allow_html=True)
 
-            chat_examples_to_show = profile['chat_examples'][:2]
+            for chat in profile['chat_examples'][:2]:
+                st.markdown(f'''
+                <div class="dialog-card">
+                    <div class="dialog-header">👤 {chat['colleague']}</div>
+                    <div class="dialog-message dialog-request">
+                        <strong>📨 Запрос:</strong><br>
+                        {chat['request']}
+                    </div>
+                    <div class="dialog-message dialog-response">
+                        <strong>💬 Твой ответ:</strong><br>
+                        {chat['your_response']}
+                    </div>
+                    <div class="dialog-vibe">💭 {chat['vibe']}</div>
+                </div>
+                ''', unsafe_allow_html=True)
 
-            for i, chat in enumerate(chat_examples_to_show, 1):
-                # Определяем цвет
-                vibe_lower = chat['vibe'].lower()
-                if any(word in vibe_lower for word in ['срочн', 'дедлайн', 'баг', 'критич', 'alarm', 'error']):
-                    border_color = "#dc3545"
-                    bg_color = "rgba(220, 53, 69, 0.1)"
-                    emoji = "🔴"
-                elif any(word in vibe_lower for word in ['приятн', 'круто', 'кайф', 'классн', 'отличн', 'супер']):
-                    border_color = "#28a745"
-                    bg_color = "rgba(40, 167, 69, 0.1)"
-                    emoji = "🟢"
-                else:
-                    border_color = "#667eea"
-                    bg_color = "rgba(102, 126, 234, 0.1)"
-                    emoji = "🟣"
-
-                # ВАЖНО: HTML должен быть в ОДНУ строку без переносов!
-                chat_html = f'<div style="background: {bg_color}; padding: 1.5rem; border-radius: 12px; border-left: 5px solid {border_color}; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);"><div style="font-weight: 600; color: {border_color}; margin-bottom: 1rem; font-size: 1.05rem;"><span style="font-size: 1.2rem;">👤</span> {chat["colleague"]}</div><div style="background: rgba(255, 255, 255, 0.6); padding: 1rem 1.2rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid {border_color}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);"><div style="color: {border_color}; font-weight: 600; margin-bottom: 0.4rem;">📨 Запрос:</div><div style="color: inherit; line-height: 1.6;">{chat["request"]}</div></div><div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%); padding: 1rem 1.2rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #667eea; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);"><div style="color: #667eea; font-weight: 600; margin-bottom: 0.4rem;">💬 Твой ответ:</div><div style="color: inherit; line-height: 1.6;">{chat["your_response"]}</div></div><div style="font-size: 0.9rem; color: #777; font-style: italic; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px dashed rgba(0, 0, 0, 0.1);"><span style="font-size: 1.1rem;"></span> <em>{chat["vibe"]}</em></div></div>'
-
-                st.markdown(chat_html, unsafe_allow_html=True)
-
-            st.markdown("---")
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # Реальные задачи
-        st.markdown("### 🎯 Задачи, с которыми столкнёшься")
-        st.markdown("*От простых до сложных — вот что ждёт тебя в реальности:*")
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🎯 Реальные задачи</div>', unsafe_allow_html=True)
+
+        difficulty_config = {
+            "easy": {"emoji": "🟢", "label": "ЛЕГКО"},
+            "medium": {"emoji": "🟡", "label": "СРЕДНЕ"},
+            "hard": {"emoji": "🔴", "label": "СЛОЖНО"}
+        }
 
         for i, case in enumerate(profile['real_cases'], 1):
-            difficulty_emoji = {"easy": "🟢", "medium": "🟡", "hard": "🔴"}
-            st.markdown(f"""
-            <div class="case-card {case['difficulty']}">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <span style="font-size: 1.5rem;">{difficulty_emoji[case['difficulty']]}</span>
-                    <span class="difficulty-badge {get_difficulty_class(case['difficulty'])}">{case['difficulty'].upper()}</span>
+            diff = difficulty_config.get(case['difficulty'], {"emoji": "⚪", "label": "?"})
+
+            st.markdown(f'''
+            <div class="task-card {case['difficulty']}">
+                <div class="task-header">
+                    <span style="font-size: 1.3rem;">{diff['emoji']}</span>
+                    <span class="badge badge-{case['difficulty'][:4]}">{diff['label']}</span>
                 </div>
-                <h4>#{i}. {case['title']}</h4>
-                <p>{case['description']}</p>
+                <div class="task-title">#{i}. {case['title']}</div>
+                <div class="task-description">{case['description']}</div>
             </div>
-            """, unsafe_allow_html=True)
+            ''', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Технологии и визуал
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("### 🛠️ Инструменты и навыки")
+            st.markdown('<div class="section">', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">🛠️ Технологии</div>', unsafe_allow_html=True)
+
+            tech_html = '<div class="tech-tags">'
             for tech in profile['tech_stack']:
-                st.markdown(f'<span class="tech-badge">{tech}</span>', unsafe_allow_html=True)
+                tech_html += f'<span class="tech-tag">{tech}</span>'
+            tech_html += '</div>'
+
+            st.markdown(tech_html, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
-            st.markdown("### 🎨 Что увидишь в работе")
+            st.markdown('<div class="section">', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">🎨 Что увидишь</div>', unsafe_allow_html=True)
+
+            visual_html = '<div class="styled-list"><ul>'
             for visual in profile['visual']:
-                st.markdown(f"- {visual}")
+                visual_html += f'<li>{visual}</li>'
+            visual_html += '</ul></div>'
+
+            st.markdown(visual_html, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # Честно о профессии
+        st.divider()
         st.markdown("### 💬 Честно о профессии")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("#### ✅ За что полюбишь")
-            st.success(profile.get('pros', 'Творческая свобода, видимый результат, постоянное обучение'))
+            pros = profile.get('pros', 'Творчество, развитие, результат')
+            st.success(f"**✅ За что полюбишь**\n\n{pros}")
 
         with col2:
-            st.markdown("#### ⚠️ К чему готовиться")
-            st.warning(profile.get('cons', 'Сжатые дедлайны, частые правки, синдром самозванца'))
+            cons = profile.get('cons', 'Дедлайны, правки, стресс')
+            st.warning(f"**⚠️ К чему готовиться**\n\n{cons}")
 
         # Кнопка для нового поиска
-        st.markdown("---")
+        st.divider()
         if st.button("🔍 Изучить другую профессию", type="primary", use_container_width=True):
-            reset_session()
-            st.rerun()
-
-    else:
-        st.error("Профиль не найден")
-        if st.button("🔄 Начать заново"):
             reset_session()
             st.rerun()

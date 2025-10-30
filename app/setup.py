@@ -25,7 +25,7 @@ async def lifespan(_: FastAPI):
 
     await teardown()
 
-app = FastAPI(title='AI Reels', lifespan=lifespan, debug=settings.prod_mode, dependencies=[Depends(verify_api_key)])
+app = FastAPI(title='AI hh.ru', lifespan=lifespan, debug=settings.prod_mode, dependencies=[Depends(verify_api_key)])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

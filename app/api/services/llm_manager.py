@@ -100,11 +100,11 @@ class OllamaService:
 
     async def generate_clarification(self, user_message: str) -> str:
         """Генерация уточняющего вопроса"""
-        prompt = f"""Ты - карьерный консультант для IT-специалистов.
+        prompt = f"""Ты - карьерный консультант для специалистов разных профессий.
 
 Пользователь спросил: "{user_message}"
 
-Задай ОДИН короткий уточняющий вопрос (максимум 8-10 слов), чтобы лучше понять контекст.
+Задай ОДИН короткий уточняющий вопрос (максимум 15 слов), чтобы лучше понять контекст для о.
 
 Примеры хороших вопросов:
 - "Больше креатива или рутины?"
@@ -117,7 +117,7 @@ class OllamaService:
         response = await self._generate(
             prompt,
             temperature=0.5,
-            num_predict=50,
+            num_predict=100,
             stream=False
         )
         return response.strip().strip('"\'')
@@ -191,7 +191,7 @@ class OllamaService:
             full_text = await self._generate(
                 prompt,
                 temperature=0.8,
-                num_predict=2048,
+                num_predict=settings.ollama_num_predict,
                 stream=False
             )
 

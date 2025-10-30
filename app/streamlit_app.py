@@ -145,8 +145,8 @@ def reset_session():
 
 
 # Заголовок
-st.markdown('<div class="main-title">🚀 IT Career Explorer</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Узнай, каково это — работать в IT</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🚀 Career Explorer</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Узнай вайб различных работ</div>', unsafe_allow_html=True)
 
 # Проверка API
 with st.sidebar:
@@ -222,7 +222,6 @@ elif st.session_state.step == 'clarification':
 
         user_answer = st.text_input(
             "Ваш ответ:",
-            placeholder="Например: Больше креатива",
             max_chars=200
         )
 

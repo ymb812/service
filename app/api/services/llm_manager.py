@@ -25,7 +25,6 @@ class OllamaService:
         }
 
         if stream:
-            # Streaming генерация
             response = await self.client.generate(
                 model=self.model,
                 prompt=prompt,
@@ -39,7 +38,6 @@ class OllamaService:
 
             return full_text
         else:
-            # Обычная генерация
             response = await self.client.generate(
                 model=self.model,
                 prompt=prompt,
@@ -47,6 +45,58 @@ class OllamaService:
                 stream=False
             )
             return response['response']
+
+    def _normalize_time(self, time_str: str) -> str:
+        """Нормализация времени к формату HH:MM"""
+        time_str = time_str.strip()
+
+        # Убираем лишние пробелы
+        time_str = re.sub(r'\s+', '', time_str)
+
+        # Если уже в формате HH:MM
+        if re.match(r'^\d{2}:\d{2}$', time_str):
+            return time_str
+
+        # Если H:MM -> 0H:MM
+        if re.match(r'^\d:\d{2}$', time_str):
+            return f"0{time_str}"
+
+        # Если HH:M -> HH:0M
+        if re.match(r'^\d{2}:\d$', time_str):
+            return f"{time_str}0"
+
+        # Если H:M -> 0H:0M
+        if re.match(r'^\d:\d$', time_str):
+            parts = time_str.split(':')
+            return f"0{parts[0]}:0{parts[1]}"
+
+        return time_str
+
+    def _clean_profile_data(self, data: dict) -> dict:
+        """Очистка и нормализация данных профиля"""
+        # Нормализуем время в расписании
+        if 'typical_day' in data and isinstance(data['typical_day'], list):
+            for item in data['typical_day']:
+                if 'time' in item:
+                    item['time'] = self._normalize_time(item['time'])
+
+        # Убеждаемся, что все поля - списки строк
+        list_fields = ['sounds', 'tech_stack', 'visual']
+        for field in list_fields:
+            if field in data:
+                if not isinstance(data[field], list):
+                    data[field] = [str(data[field])]
+                else:
+                    data[field] = [str(item) for item in data[field]]
+
+        # Проверяем balance_score
+        if 'balance_score' in data:
+            score = str(data['balance_score'])
+            # Если нет формата X/Y, пытаемся исправить
+            if '/' not in score:
+                data['balance_score'] = "50/50"  # Дефолтное значение
+
+        return data
 
     async def generate_clarification(self, user_message: str) -> str:
         """Генерация уточняющего вопроса"""
@@ -80,11 +130,6 @@ class OllamaService:
     ) -> dict:
         """
         Генерация карьерного профиля с опциональным прогрессом
-
-        Args:
-            initial_message: Первичный вопрос пользователя
-            clarification_answer: Ответ на уточнение
-            progress_callback: Опциональная функция для отслеживания прогресса
         """
         prompt = f"""Ты генеришь детальные карьерные профили IT-специалистов.
 
@@ -96,7 +141,7 @@ class OllamaService:
     "position_title": "Полное название позиции с контекстом",
     "sounds": ["Звук 1 рабочего дня", "Звук 2", "Звук 3"],
     "career_growth": "Junior -> Senior -> Lead -> ...",
-    "balance_score": "X/Y",
+    "balance_score": "50/50",
     "benefit": "Главная польза/ценность этой работы",
     "typical_day": [
         {{"time": "10:00", "activity": "Описание активности"}},
@@ -111,8 +156,8 @@ class OllamaService:
 ВАЖНО:
 - sounds - атмосферные звуки рабочего дня (клики клавиатуры, zoom-созвоны, уведомления)
 - career_growth - реалистичный путь карьеры через стрелки ->
-- balance_score - work-life баланс в формате число/число (например 50/50, 60/40)
-- typical_day - минимум 4 пункта с разным временем
+- balance_score - work-life баланс ОБЯЗАТЕЛЬНО в формате число/число (например: 50/50, 60/40, 70/30)
+- typical_day - минимум 4 пункта, время СТРОГО в формате ЧЧ:ММ (например: 09:00, 14:30)
 - visual - что можно показать визуально (скриншоты, фото рабочего места)
 
 Верни ТОЛЬКО валидный JSON без дополнительного текста."""
@@ -143,7 +188,6 @@ class OllamaService:
                     await progress_callback(full_text)
                     last_update = current_time
         else:
-            # Без стриминга
             full_text = await self._generate(
                 prompt,
                 temperature=0.8,
@@ -157,13 +201,15 @@ class OllamaService:
             raise ValueError("Failed to extract JSON from LLM response")
 
         try:
-            return json.loads(json_match.group())
+            data = json.loads(json_match.group())
+            # Очищаем и нормализуем данные
+            data = self._clean_profile_data(data)
+            return data
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON from LLM: {e}\n\nResponse: {full_text[:500]}")
 
     async def close(self):
         """Закрытие клиента"""
-        # AsyncClient от ollama не требует явного закрытия
         pass
 
 

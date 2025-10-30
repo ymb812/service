@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 
@@ -47,8 +47,34 @@ class FinalAnswerRequest(BaseModel):
 
 class DayScheduleItem(BaseModel):
     """Элемент расписания"""
-    time: str = Field(..., pattern=r"^\d{2}:\d{2}$")
+    time: str
     activity: str
+
+    @field_validator('time')
+    @classmethod
+    def normalize_time(cls, v: str) -> str:
+        """Нормализация времени к формату HH:MM"""
+        v = v.strip()
+
+        # Если время уже в правильном формате
+        if len(v) == 5 and v[2] == ':':
+            return v
+
+        # Если формат H:MM (например 9:00)
+        if len(v) == 4 and v[1] == ':':
+            return f"0{v}"
+
+        # Если формат HH:M (например 10:5)
+        if len(v) == 4 and v[2] == ':':
+            return f"{v[:3]}0{v[3]}"
+
+        # Если формат H:M (например 9:5)
+        if len(v) == 3 and v[1] == ':':
+            return f"0{v[0]}:0{v[2]}"
+
+        # Если вообще не похоже на время, возвращаем как есть
+        # (пусть дальше упадет с ошибкой, если что)
+        return v
 
     class Config:
         json_schema_extra = {

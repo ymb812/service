@@ -2,6 +2,9 @@ from ollama import AsyncClient
 from settings.settings import settings
 import json
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaService:
@@ -46,121 +49,200 @@ class OllamaService:
             )
             return response['response']
 
-    def _normalize_time(self, time_str: str) -> str:
-        """Нормализация времени к формату HH:MM"""
-        time_str = time_str.strip()
+    def _extract_json(self, text: str) -> dict:
+        """Умное извлечение JSON из текста LLM"""
+        # 1. Попытка найти JSON блок в markdown
+        code_block = re.search(r'```json\s*(\{.*?\})\s*```', text, re.DOTALL)
+        if code_block:
+            text = code_block.group(1)
 
-        # Убираем лишние пробелы
-        time_str = re.sub(r'\s+', '', time_str)
+        # 2. Поиск первой { и последней }
+        start = text.find('{')
+        end = text.rfind('}')
 
-        # Если уже в формате HH:MM
-        if re.match(r'^\d{2}:\d{2}$', time_str):
-            return time_str
+        if start == -1 or end == -1:
+            raise ValueError("No JSON found in response")
 
-        # Если H:MM -> 0H:MM
-        if re.match(r'^\d:\d{2}$', time_str):
-            return f"0{time_str}"
+        json_str = text[start:end + 1]
 
-        # Если HH:M -> HH:0M
-        if re.match(r'^\d{2}:\d$', time_str):
-            return f"{time_str}0"
+        # 3. Парсинг с детальной ошибкой
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parse error at position {e.pos}:\n{json_str[max(0, e.pos - 50):e.pos + 50]}")
+            raise ValueError(f"Invalid JSON: {e.msg}")
 
-        # Если H:M -> 0H:0M
-        if re.match(r'^\d:\d$', time_str):
-            parts = time_str.split(':')
-            return f"0{parts[0]}:0{parts[1]}"
+    async def check_profession_reality(self, user_message: str) -> dict:
+        """
+        Проверяет реальность профессии и возвращает:
+        {
+            "is_real": true/false,
+            "profession_name": "Название профессии" или null,
+            "alternatives": ["Профессия 1", "Профессия 2", "Профессия 3"] или null
+        }
+        """
+        prompt = f"""Ты - эксперт по профессиям.
 
-        return time_str
+Пользователь написал: "{user_message}"
 
-    def _clean_profile_data(self, data: dict) -> dict:
-        """Очистка и нормализация данных профиля"""
-        # Нормализуем время в расписании
-        if 'typical_day' in data and isinstance(data['typical_day'], list):
-            for item in data['typical_day']:
-                if 'time' in item:
-                    item['time'] = self._normalize_time(item['time'])
+Определи:
+1. Это реальная профессия? (да/нет)
+2. Если да - как она точно называется?
+3. Если нет - предложи 3 похожие реальные профессии
 
-        # Убеждаемся, что все поля - списки строк
-        list_fields = ['sounds', 'tech_stack', 'visual']
-        for field in list_fields:
-            if field in data:
-                if not isinstance(data[field], list):
-                    data[field] = [str(data[field])]
-                else:
-                    data[field] = [str(item) for item in data[field]]
+Ответь СТРОГО в формате JSON:
+{{
+    "is_real": true,
+    "profession_name": "Точное название профессии",
+    "alternatives": null
+}}
 
-        # Проверяем balance_score
-        if 'balance_score' in data:
-            score = str(data['balance_score'])
-            # Если нет формата X/Y, пытаемся исправить
-            if '/' not in score:
-                data['balance_score'] = "50/50"  # Дефолтное значение
+ИЛИ если нереальная:
+{{
+    "is_real": false,
+    "profession_name": null,
+    "alternatives": ["Профессия 1", "Профессия 2", "Профессия 3"]
+}}
 
-        return data
+Ответ (только JSON):"""
 
-    async def generate_clarification(self, user_message: str) -> str:
-        """Генерация уточняющего вопроса"""
-        prompt = f"""Ты - карьерный консультант для специалистов разных профессий.
+        response = await self._generate(
+            prompt,
+            temperature=0.3,
+            num_predict=200,
+            stream=False
+        )
 
-Пользователь спросил: "{user_message}"
+        return self._extract_json(response)
 
-Задай ОДИН короткий уточняющий вопрос (максимум 15 слов), чтобы лучше понять контекст для о.
+    async def generate_profession_detail_question(
+            self,
+            profession_name: str,
+            question_number: int
+    ) -> str:
+        """
+        Генерирует уточняющий вопрос о профессии (до 3 вопросов)
+        question_number: 1, 2, или 3
+        """
+        prompt = f"""Ты уточняешь детали профессии "{profession_name}".
 
-Примеры хороших вопросов:
-- "Больше креатива или рутины?"
-- "Удалённо или в офисе?"
-- "Продукт или аутсорс?"
-- "Стартап или корпорация?"
+Это вопрос #{question_number} из максимум 3.
 
-Ответь ТОЛЬКО текстом вопроса без кавычек и дополнительных пояснений."""
+Задай ОДИН короткий вопрос, чтобы понять:
+- Вопрос 1: Уровень опыта
+- Вопрос 2: Специфика работы
+- Вопрос 3: Индустрия или технологии
+
+Примеры:
+- "Какой у вас опыт: начинающий или уже работали?"
+- "Продуктовая команда или аутсорс?"
+- "Какая индустрия интересна: финтех, e-commerce?"
+
+Ответь ТОЛЬКО текстом вопроса без кавычек."""
 
         response = await self._generate(
             prompt,
             temperature=0.5,
-            num_predict=100,
+            num_predict=50,
+            stream=False
+        )
+        return response.strip().strip('"\'')
+
+    async def generate_vibe_question(self, profession_context: str) -> str:
+        """
+        Генерирует финальный вопрос про "вайб" работы
+        """
+        prompt = f"""Контекст профессии: "{profession_context}"
+
+Задай ОДИН вопрос (до 15 слов) про общую атмосферу и стиль работы.
+
+Примеры хороших вопросов:
+- "Больше креатива или рутины?"
+- "Интенсивный темп или размеренный?"
+- "Работа в одиночку или в команде?"
+- "Глубокое погружение или широкий охват?"
+
+Ответь ТОЛЬКО текстом вопроса без кавычек."""
+
+        response = await self._generate(
+            prompt,
+            temperature=0.6,
+            num_predict=50,
             stream=False
         )
         return response.strip().strip('"\'')
 
     async def generate_profile(
             self,
-            initial_message: str,
-            clarification_answer: str,
+            profession_name: str,
+            clarification_history: list,
+            vibe_answer: str,
             progress_callback=None
     ) -> dict:
         """
-        Генерация карьерного профиля с опциональным прогрессом
+        Генерация карьерного профиля
+        clarification_history: [{"question": "...", "answer": "..."}, ...]
         """
-        prompt = f"""Ты генеришь детальные карьерные профили IT-специалистов.
 
-Запрос пользователя: "{initial_message}"
-Уточнение: "{clarification_answer}"
+        # Формируем контекст из истории уточнений
+        context_parts = [f"Q: {item['question']}\nA: {item['answer']}"
+                         for item in clarification_history]
+        context = "\n\n".join(context_parts)
 
-Создай профиль в формате JSON со следующей структурой:
+        prompt = f"""Ты генеришь детальные карьерные профили специалистов.
+
+Профессия: "{profession_name}"
+
+Контекст из уточнений:
+{context}
+
+Общий вайб работы: "{vibe_answer}"
+
+Создай профиль в формате JSON:
 {{
-    "position_title": "Полное название позиции с контекстом",
-    "sounds": ["Звук 1 рабочего дня", "Звук 2", "Звук 3"],
-    "career_growth": "Junior -> Senior -> Lead -> ...",
-    "balance_score": "50/50",
-    "benefit": "Главная польза/ценность этой работы",
-    "typical_day": [
-        {{"time": "10:00", "activity": "Описание активности"}},
-        {{"time": "12:00", "activity": "Описание активности"}},
-        {{"time": "14:00", "activity": "Описание активности"}},
-        {{"time": "16:00", "activity": "Описание активности"}}
+    "position_title": "Полное название позиции с контекстом (например: Backend-разработчик в финтех-стартапе)",
+    "sounds": ["Атмосферный звук 1", "Атмосферный звук 2", "Атмосферный звук 3"],
+    "career_growth": "Junior → Middle → Senior → Lead → ...",
+    "balance_score": "60/40",
+    "benefit": "Главная польза/ценность этой работы (одно предложение)",
+    "typical_day": "Подробное текстовое описание типичного рабочего дня от утра до вечера. Начни с времени пробуждения, опиши основные активности с временными метками. Минимум 5-7 предложений, создающих живую картину дня.",
+    "real_cases": [
+        {{
+            "title": "Название реальной задачи 1",
+            "description": "Детальное описание задачи и что нужно сделать",
+            "difficulty": "easy"
+        }},
+        {{
+            "title": "Название реальной задачи 2",
+            "description": "Детальное описание задачи и что нужно сделать",
+            "difficulty": "medium"
+        }},
+        {{
+            "title": "Название реальной задачи 3",
+            "description": "Детальное описание задачи и что нужно сделать",
+            "difficulty": "hard"
+        }}
     ],
-    "tech_stack": ["Технология 1", "Технология 2", "Технология 3"],
-    "visual": ["Описание визуала 1", "Описание визуала 2", "Описание визуала 3"]
+    "tech_stack": ["Технология 1", "Технология 2", "Технология 3", "Технология 4"],
+    "visual": ["Что показать визуально 1", "Что показать визуально 2", "Что показать визуально 3"]
 }}
 
-ВАЖНО:
-- sounds - атмосферные звуки рабочего дня (клики клавиатуры, zoom-созвоны, уведомления)
-- career_growth - реалистичный путь карьеры через стрелки ->
-- balance_score - work-life баланс ОБЯЗАТЕЛЬНО в формате число/число (например: 50/50, 60/40, 70/30)
-- typical_day - минимум 4 пункта, время СТРОГО в формате ЧЧ:ММ (например: 09:00, 14:30)
-- visual - что можно показать визуально (скриншоты, фото рабочего места)
+ВАЖНЫЕ ТРЕБОВАНИЯ:
 
-Верни ТОЛЬКО валидный JSON без дополнительного текста."""
+1. **sounds**: Атмосферные звуки рабочего дня (клики мыши, уведомления Slack, zoom-звонки, шум кофемашины)
+
+2. **balance_score**: СТРОГО формат "XX/YY" (например: 70/30, 50/50, 60/40)
+
+3. **typical_day**: Живое описание дня в формате текста. Пример:
+   "Утро начинается в 9:00 с проверки метрик в Grafana и прочтения сообщений в Slack. В 10:00 ежедневный стендап на 15 минут, где обсуждаем прогресс. С 10:30 до 13:00 — глубокая работа над фичей: пишу код, делаю ревью PR коллег. Обед в 13:00. После обеда в 14:00 созвон с дизайнером по новому функционалу. С 15:00 до 17:30 дописываю тесты и фиксю баги. В 17:30 отправляю PR на ревью и планирую завтрашний день. День заканчивается в 18:00."
+
+4. **real_cases**: 3 реальные задачи с нарастающей сложностью (easy/medium/hard). Должны быть конкретными и специфичными для профессии.
+
+5. **tech_stack**: 4-6 реальных технологий/инструментов
+
+6. **visual**: Что можно показать на скриншотах (интерфейсы, код, дашборды)
+
+Верни ТОЛЬКО валидный JSON без markdown и пояснений."""
 
         # Генерация со стримингом и прогрессом
         if progress_callback:
@@ -169,7 +251,7 @@ class OllamaService:
                 prompt=prompt,
                 options={
                     'temperature': 0.8,
-                    'num_predict': 2048
+                    'num_predict': 3072  # Увеличили для подробного описания
                 },
                 stream=True
             )
@@ -191,22 +273,37 @@ class OllamaService:
             full_text = await self._generate(
                 prompt,
                 temperature=0.8,
-                num_predict=settings.ollama_num_predict,
+                num_predict=3072,
                 stream=False
             )
 
-        # Извлекаем JSON из ответа
-        json_match = re.search(r'\{.*\}', full_text, re.DOTALL)
-        if not json_match:
-            raise ValueError("Failed to extract JSON from LLM response")
+        # Извлекаем и валидируем JSON
+        data = self._extract_json(full_text)
 
-        try:
-            data = json.loads(json_match.group())
-            # Очищаем и нормализуем данные
-            data = self._clean_profile_data(data)
-            return data
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON from LLM: {e}\n\nResponse: {full_text[:500]}")
+        # Базовая валидация обязательных полей
+        required_fields = [
+            'position_title', 'sounds', 'career_growth', 'balance_score',
+            'benefit', 'typical_day', 'real_cases', 'tech_stack', 'visual'
+        ]
+
+        for field in required_fields:
+            if field not in data:
+                raise ValueError(f"Missing required field: {field}")
+
+        # Проверяем формат balance_score
+        if not re.match(r'^\d+/\d+$', data['balance_score']):
+            logger.warning(f"Invalid balance_score format: {data['balance_score']}, fixing to 50/50")
+            data['balance_score'] = "50/50"
+
+        # Проверяем real_cases
+        if len(data['real_cases']) < 3:
+            raise ValueError(f"Need at least 3 real_cases, got {len(data['real_cases'])}")
+
+        for case in data['real_cases']:
+            if 'title' not in case or 'description' not in case or 'difficulty' not in case:
+                raise ValueError("Invalid real_case structure")
+
+        return data
 
     async def close(self):
         """Закрытие клиента"""

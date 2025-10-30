@@ -8,79 +8,33 @@ class InitialQueryRequest(BaseModel):
     user_message: str = Field(..., min_length=10, max_length=500)
     user_id: Optional[int] = None
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "user_message": "Каково это - быть frontend-разработчиком в стартапе?",
-                "user_id": 123
-            }
-        }
-
 
 class ClarificationResponse(BaseModel):
     """Уточняющий вопрос"""
     session_id: int
     question: str
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "session_id": 1,
-                "question": "Больше креатива или рутины?"
-            }
-        }
+    stage: str  # profession_check, profession_details, profession_alternatives, vibe_question
+    alternatives: Optional[List[str]] = None  # Если профессия нереальная
 
 
 class FinalAnswerRequest(BaseModel):
     """Ответ на уточняющий вопрос"""
     session_id: int
-    answer: str = Field(..., min_length=1, max_length=200)
+    answer: str = Field(..., min_length=1, max_length=500)
+
+
+class RealCaseExample(BaseModel):
+    """Пример реальной задачи"""
+    title: str
+    description: str
+    difficulty: str  # easy, medium, hard
 
     class Config:
         json_schema_extra = {
             "example": {
-                "session_id": 1,
-                "answer": "Больше креатива"
-            }
-        }
-
-
-class DayScheduleItem(BaseModel):
-    """Элемент расписания"""
-    time: str
-    activity: str
-
-    @field_validator('time')
-    @classmethod
-    def normalize_time(cls, v: str) -> str:
-        """Нормализация времени к формату HH:MM"""
-        v = v.strip()
-
-        # Если время уже в правильном формате
-        if len(v) == 5 and v[2] == ':':
-            return v
-
-        # Если формат H:MM (например 9:00)
-        if len(v) == 4 and v[1] == ':':
-            return f"0{v}"
-
-        # Если формат HH:M (например 10:5)
-        if len(v) == 4 and v[2] == ':':
-            return f"{v[:3]}0{v[3]}"
-
-        # Если формат H:M (например 9:5)
-        if len(v) == 3 and v[1] == ':':
-            return f"0{v[0]}:0{v[2]}"
-
-        # Если вообще не похоже на время, возвращаем как есть
-        # (пусть дальше упадет с ошибкой, если что)
-        return v
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "time": "10:00",
-                "activity": "Daily-митинг с командой"
+                "title": "Оптимизация SQL запроса",
+                "description": "Ускорить выборку из таблицы на 10М записей с 30 сек до 2 сек",
+                "difficulty": "medium"
             }
         }
 
@@ -93,7 +47,8 @@ class CareerProfileResponse(BaseModel):
     career_growth: str
     balance_score: str
     benefit: str
-    typical_day: List[DayScheduleItem]
+    typical_day: str  # Текстовое описание рабочего дня
+    real_cases: List[RealCaseExample]  # Примеры реальных задач
     tech_stack: List[str]
     visual: List[str]
     created_at: datetime
@@ -102,21 +57,21 @@ class CareerProfileResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "session_id": 1,
-                "position_title": "Frontend-разработчик в стартапе",
-                "sounds": [
-                    "Текстурные клики клавиатуры",
-                    "Обрывки диалогов из Zoom",
-                    "Уведомления из GitHub"
+                "position_title": "Backend-разработчик в финтехе",
+                "sounds": ["Звук клавиатуры", "Пинги из Slack", "Алерты мониторинга"],
+                "career_growth": "Junior → Middle → Senior → Team Lead",
+                "balance_score": "60/40",
+                "benefit": "Твой код обрабатывает миллионы транзакций",
+                "typical_day": "Утро начинается с проверки алертов и дейли в 10:00...",
+                "real_cases": [
+                    {
+                        "title": "Оптимизация платёжного API",
+                        "description": "Снизить latency с 500ms до 100ms",
+                        "difficulty": "hard"
+                    }
                 ],
-                "career_growth": "Junior -> Senior -> Tech Lead",
-                "balance_score": "50/50",
-                "benefit": "Твой код влияет на продукт",
-                "typical_day": [
-                    {"time": "10:00", "activity": "Daily-митинг"},
-                    {"time": "11:30", "activity": "Вёрстка компонента"}
-                ],
-                "tech_stack": ["JavaScript", "React", "Figma"],
-                "visual": ["Скриншоты Figma", "VS Code с кодом"],
+                "tech_stack": ["Python", "PostgreSQL", "Redis"],
+                "visual": ["Дашборды Grafana", "Код в IDE"],
                 "created_at": "2024-01-01T12:00:00"
             }
         }

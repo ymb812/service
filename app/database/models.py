@@ -9,8 +9,16 @@ class Session(Model):
 
     # Диалог
     initial_message = fields.TextField()
-    clarification_question = fields.TextField()
-    clarification_answer = fields.TextField(null=True)
+
+    # История уточнений (список вопросов и ответов)
+    clarification_history = fields.JSONField(default=list)  # [{"question": "...", "answer": "..."}]
+
+    # Текущий этап уточнения
+    clarification_stage = fields.CharField(max_length=50, default="profession_check")
+    # Значения: profession_check, profession_details, profession_alternatives, vibe_question, completed
+
+    # Определённая профессия
+    identified_profession = fields.CharField(max_length=200, null=True)
 
     # Результат
     result_data = fields.JSONField(null=True)

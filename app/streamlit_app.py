@@ -703,18 +703,35 @@ elif st.session_state.step == 'result':
         st.markdown("### 💎 Главная ценность")
         st.info(profile['benefit'])
 
-        # Типичный день
-        st.markdown("### 📅 Типичный рабочий день")
-        st.markdown(f'<div class="typical-day-text">{profile["typical_day"]}</div>', unsafe_allow_html=True)
+        # В секции "Типичный день"
+        st.markdown("### 📅 Так выглядит твой день")
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            color: inherit;
+        ">
+        {profile['typical_day'].replace('\n\n', '<br><br>')}
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Реальные задачи
-        st.markdown("### 🎯 Реальные задачи")
-        for case in profile['real_cases']:
-            difficulty_class = get_difficulty_class(case['difficulty'])
+        # В секции "Реальные задачи"
+        st.markdown("### 🎯 Задачи, с которыми столкнёшься")
+        st.markdown("*От простых до сложных — вот что ждёт тебя в реальности:*")
+
+        for i, case in enumerate(profile['real_cases'], 1):
+            difficulty_emoji = {"easy": "🟢", "medium": "🟡", "hard": "🔴"}
             st.markdown(f"""
             <div class="case-card {case['difficulty']}">
-                <span class="difficulty-badge {difficulty_class}">{case['difficulty'].upper()}</span>
-                <h4>{case['title']}</h4>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 1.5rem;">{difficulty_emoji[case['difficulty']]}</span>
+                    <span class="difficulty-badge {get_difficulty_class(case['difficulty'])}">{case['difficulty'].upper()}</span>
+                </div>
+                <h4>#{i}. {case['title']}</h4>
                 <p>{case['description']}</p>
             </div>
             """, unsafe_allow_html=True)
@@ -731,6 +748,19 @@ elif st.session_state.step == 'result':
             st.markdown("### 🎨 Что увидишь в работе")
             for visual in profile['visual']:
                 st.markdown(f"- {visual}")
+
+        # После tech_stack
+        st.markdown("### 💬 Честно о профессии")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("#### ✅ За что полюбишь")
+            st.success(profile.get('pros', 'Творческая свобода, видимый результат, постоянное обучение'))
+
+        with col2:
+            st.markdown("#### ⚠️ К чему готовиться")
+            st.warning(profile.get('cons', 'Сжатые дедлайны, частые правки, синдром самозванца'))
 
         # Кнопка для нового поиска
         st.markdown("---")

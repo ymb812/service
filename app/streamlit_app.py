@@ -506,8 +506,8 @@ with st.sidebar:
         st.markdown(f"**Текущий этап:** {get_stage_emoji(stage)} {stage_label}")
 
         if stage == 'profession_details':
-            st.markdown(f"**Вопрос:** {st.session_state.question_count}/3")
-            progress = st.session_state.question_count / 3
+            st.markdown(f"**Вопрос:** {st.session_state.question_count}/2")
+            progress = st.session_state.question_count / 2
             st.progress(progress)
 
     st.divider()

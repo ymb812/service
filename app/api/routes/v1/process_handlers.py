@@ -148,7 +148,7 @@ async def answer_clarification(request: FinalAnswerRequest):
                 alternatives=None
             )
 
-        # === Уточнение деталей профессии (до 3 вопросов) ===
+        # === Уточнение деталей профессии (до 2 вопросов) ===
         if stage == "profession_details":
             # Добавляем последний ответ в историю
             if history:
@@ -159,8 +159,8 @@ async def answer_clarification(request: FinalAnswerRequest):
 
             session.clarification_history = history
 
-            # Проверяем, нужны ли ещё вопросы (максимум 3)
-            if len(history) < 3:
+            # Проверяем, нужны ли ещё вопросы (максимум 2)
+            if len(history) < 2:
                 # Задаём следующий вопрос с учетом контекста
                 next_question = await llm_service.generate_profession_detail_question(
                     profession_name=session.identified_profession,

@@ -21,7 +21,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Кастомные стили
 # Кастомные стили с анимациями
 st.markdown("""
 <style>
@@ -75,6 +74,17 @@ st.markdown("""
         }
         100% {
             background-position: 0% 50%;
+        }
+    }
+
+    @keyframes chatAppear {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
@@ -308,6 +318,15 @@ st.markdown("""
         margin: 1.5rem 0;
         font-size: 0.9rem;
         animation: pulse 2s ease-in-out infinite;
+    }
+
+    .chat-card {
+        animation: chatAppear 0.4s ease-out;
+        transition: all 0.3s ease;
+    }
+
+    .chat-card:hover {
+        transform: translateX(5px);
     }
 
     /* Анимация для кнопок Streamlit */
@@ -703,7 +722,7 @@ elif st.session_state.step == 'result':
         st.markdown("### 💎 Главная ценность")
         st.info(profile['benefit'])
 
-        # В секции "Типичный день"
+        # Типичный день
         st.markdown("### 📅 Так выглядит твой день")
         st.markdown(f"""
         <div style="
@@ -715,11 +734,43 @@ elif st.session_state.step == 'result':
             font-size: 1.05rem;
             color: inherit;
         ">
-        {profile['typical_day'].replace('\n\n', '<br><br>')}
+        {profile['typical_day'].replace(chr(10) + chr(10), '<br><br>')}
         </div>
         """, unsafe_allow_html=True)
 
-        # В секции "Реальные задачи"
+        st.markdown("---")
+
+        # Диалоги с коллегами (показываем только первые 2)
+        if 'chat_examples' in profile and profile['chat_examples']:
+            st.markdown("### 💬 Диалоги с коллегами")
+            st.markdown("*Вот как выглядит общение в рабочих чатах:*")
+
+            chat_examples_to_show = profile['chat_examples'][:2]
+
+            for i, chat in enumerate(chat_examples_to_show, 1):
+                # Определяем цвет
+                vibe_lower = chat['vibe'].lower()
+                if any(word in vibe_lower for word in ['срочн', 'дедлайн', 'баг', 'критич', 'alarm', 'error']):
+                    border_color = "#dc3545"
+                    bg_color = "rgba(220, 53, 69, 0.1)"
+                    emoji = "🔴"
+                elif any(word in vibe_lower for word in ['приятн', 'круто', 'кайф', 'классн', 'отличн', 'супер']):
+                    border_color = "#28a745"
+                    bg_color = "rgba(40, 167, 69, 0.1)"
+                    emoji = "🟢"
+                else:
+                    border_color = "#667eea"
+                    bg_color = "rgba(102, 126, 234, 0.1)"
+                    emoji = "🟣"
+
+                # ВАЖНО: HTML должен быть в ОДНУ строку без переносов!
+                chat_html = f'<div style="background: {bg_color}; padding: 1.5rem; border-radius: 12px; border-left: 5px solid {border_color}; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);"><div style="font-weight: 600; color: {border_color}; margin-bottom: 1rem; font-size: 1.05rem;"><span style="font-size: 1.2rem;">👤</span> {chat["colleague"]}</div><div style="background: rgba(255, 255, 255, 0.6); padding: 1rem 1.2rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid {border_color}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);"><div style="color: {border_color}; font-weight: 600; margin-bottom: 0.4rem;">📨 Запрос:</div><div style="color: inherit; line-height: 1.6;">{chat["request"]}</div></div><div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%); padding: 1rem 1.2rem; border-radius: 10px; margin: 0.8rem 0; border-left: 3px solid #667eea; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);"><div style="color: #667eea; font-weight: 600; margin-bottom: 0.4rem;">💬 Твой ответ:</div><div style="color: inherit; line-height: 1.6;">{chat["your_response"]}</div></div><div style="font-size: 0.9rem; color: #777; font-style: italic; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px dashed rgba(0, 0, 0, 0.1);"><span style="font-size: 1.1rem;"></span> <em>{chat["vibe"]}</em></div></div>'
+
+                st.markdown(chat_html, unsafe_allow_html=True)
+
+            st.markdown("---")
+
+        # Реальные задачи
         st.markdown("### 🎯 Задачи, с которыми столкнёшься")
         st.markdown("*От простых до сложных — вот что ждёт тебя в реальности:*")
 
@@ -749,7 +800,7 @@ elif st.session_state.step == 'result':
             for visual in profile['visual']:
                 st.markdown(f"- {visual}")
 
-        # После tech_stack
+        # Честно о профессии
         st.markdown("### 💬 Честно о профессии")
 
         col1, col2 = st.columns(2)

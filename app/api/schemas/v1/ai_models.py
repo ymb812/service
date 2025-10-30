@@ -39,6 +39,24 @@ class RealCaseExample(BaseModel):
         }
 
 
+class ChatExample(BaseModel):
+    """Пример диалога с коллегой в чате"""
+    colleague: str = Field(..., description="Имя и роль коллеги")
+    request: str = Field(..., description="Сообщение-запрос от коллеги")
+    your_response: str = Field(..., description="Твой ответ")
+    vibe: str = Field(..., description="Эмоциональный окрас ситуации")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "colleague": "Саша (Backend-разработчик)",
+                "request": "Слушай, у меня API возвращает 500 на запрос профиля. Можешь глянуть фронт?",
+                "your_response": "Щас чекну. А логи бэка смотрел? Может там ошибка сериализации?",
+                "vibe": "Обычный дебаг в паре — так работает команда"
+            }
+        }
+
+
 class CareerProfileResponse(BaseModel):
     """Финальный профиль карьеры"""
     session_id: int
@@ -47,10 +65,11 @@ class CareerProfileResponse(BaseModel):
     career_growth: str
     balance_score: str
     benefit: str
-    typical_day: str  # Текстовое описание рабочего дня
-    real_cases: List[RealCaseExample]  # Примеры реальных задач
+    typical_day: str
+    real_cases: List[RealCaseExample]
     tech_stack: List[str]
     visual: List[str]
+    chat_examples: List[ChatExample]
     created_at: datetime
 
     class Config:
@@ -72,6 +91,14 @@ class CareerProfileResponse(BaseModel):
                 ],
                 "tech_stack": ["Python", "PostgreSQL", "Redis"],
                 "visual": ["Дашборды Grafana", "Код в IDE"],
+                "chat_examples": [
+                    {
+                        "colleague": "Лена (Product Manager)",
+                        "request": "Можем сделать фичу до пятницы?",
+                        "your_response": "Если без тестов — да. С тестами — нет шансов",
+                        "vibe": "Вечное противостояние скорости и качества"
+                    }
+                ],
                 "created_at": "2024-01-01T12:00:00"
             }
         }

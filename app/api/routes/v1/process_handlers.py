@@ -7,6 +7,7 @@ from api.schemas.v1.ai_models import (
     CareerProfileResponse,
     FinalAnswerRequest,
     RealCaseExample,
+    ChatExample,
 )
 from api.services.llm_manager import llm_service
 from settings.settings import settings
@@ -228,6 +229,7 @@ async def answer_clarification(request: FinalAnswerRequest):
                 real_cases=[RealCaseExample(**case) for case in profile_data["real_cases"]],
                 tech_stack=profile_data["tech_stack"],
                 visual=profile_data["visual"],
+                chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],  # ✅
                 created_at=session.created_at
             )
 
@@ -270,5 +272,6 @@ async def get_session_result(session_id: int):
         real_cases=[RealCaseExample(**case) for case in profile_data["real_cases"]],
         tech_stack=profile_data["tech_stack"],
         visual=profile_data["visual"],
+        chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],  # ✅
         created_at=session.created_at
     )

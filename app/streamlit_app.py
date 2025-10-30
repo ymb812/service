@@ -22,17 +22,74 @@ st.set_page_config(
 )
 
 # Кастомные стили
+# Кастомные стили с анимациями
 st.markdown("""
 <style>
+    /* Анимации */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    @keyframes gradientShift {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    /* Применение анимаций */
     .main-title {
         font-size: 3rem;
         font-weight: bold;
         text-align: center;
         margin-bottom: 2rem;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        animation: gradientShift 3s ease infinite;
     }
 
     .subtitle {
@@ -40,6 +97,7 @@ st.markdown("""
         color: #888;
         font-size: 1.2rem;
         margin-bottom: 3rem;
+        animation: fadeIn 1s ease-out;
     }
 
     .card {
@@ -48,6 +106,13 @@ st.markdown("""
         border-radius: 10px;
         border-left: 4px solid #667eea;
         margin: 1rem 0;
+        animation: slideInLeft 0.5s ease-out;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .card h4 {
@@ -62,13 +127,21 @@ st.markdown("""
         margin: 0.5rem 0;
         box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
         cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border-left: 3px solid #667eea;
+        animation: fadeIn 0.5s ease-out backwards;
     }
 
+    .alternative-card:nth-child(1) { animation-delay: 0.1s; }
+    .alternative-card:nth-child(2) { animation-delay: 0.2s; }
+    .alternative-card:nth-child(3) { animation-delay: 0.3s; }
+    .alternative-card:nth-child(4) { animation-delay: 0.4s; }
+    .alternative-card:nth-child(5) { animation-delay: 0.5s; }
+
     .alternative-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        transform: translateX(10px) scale(1.02);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        border-left-width: 5px;
     }
 
     .case-card {
@@ -78,6 +151,13 @@ st.markdown("""
         margin: 1rem 0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         border-left: 4px solid #28a745;
+        animation: slideInLeft 0.6s ease-out;
+        transition: all 0.3s ease;
+    }
+
+    .case-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
 
     .case-card.medium {
@@ -133,7 +213,23 @@ st.markdown("""
         margin: 0.2rem;
         font-size: 0.9rem;
         font-weight: 500;
+        animation: fadeIn 0.5s ease-out backwards;
+        transition: all 0.2s ease;
     }
+
+    .tech-badge:hover {
+        transform: scale(1.1);
+        background: #764ba2;
+    }
+
+    .tech-badge:nth-child(1) { animation-delay: 0.1s; }
+    .tech-badge:nth-child(2) { animation-delay: 0.15s; }
+    .tech-badge:nth-child(3) { animation-delay: 0.2s; }
+    .tech-badge:nth-child(4) { animation-delay: 0.25s; }
+    .tech-badge:nth-child(5) { animation-delay: 0.3s; }
+    .tech-badge:nth-child(6) { animation-delay: 0.35s; }
+    .tech-badge:nth-child(7) { animation-delay: 0.4s; }
+    .tech-badge:nth-child(8) { animation-delay: 0.45s; }
 
     .sound-item {
         background: rgba(255, 193, 7, 0.2);
@@ -142,6 +238,17 @@ st.markdown("""
         margin: 0.5rem 0;
         border-left: 3px solid #ffc107;
         color: inherit;
+        animation: slideInLeft 0.5s ease-out backwards;
+        transition: all 0.3s ease;
+    }
+
+    .sound-item:nth-child(1) { animation-delay: 0.1s; }
+    .sound-item:nth-child(2) { animation-delay: 0.2s; }
+    .sound-item:nth-child(3) { animation-delay: 0.3s; }
+
+    .sound-item:hover {
+        transform: translateX(5px);
+        border-left-width: 5px;
     }
 
     .progress-indicator {
@@ -150,13 +257,32 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
         text-align: center;
+        animation: fadeIn 0.5s ease-out;
     }
 
     .progress-bar {
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         height: 8px;
         border-radius: 4px;
-        transition: width 0.3s;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent
+        );
+        animation: shimmer 2s infinite;
     }
 
     .typical-day-text {
@@ -167,6 +293,13 @@ st.markdown("""
         line-height: 1.8;
         color: inherit;
         margin: 1rem 0;
+        animation: fadeIn 0.8s ease-out;
+        transition: all 0.3s ease;
+    }
+
+    .typical-day-text:hover {
+        background: rgba(102, 126, 234, 0.1);
+        transform: scale(1.01);
     }
 
     .divider-text {
@@ -174,6 +307,41 @@ st.markdown("""
         color: #999;
         margin: 1.5rem 0;
         font-size: 0.9rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Анимация для кнопок Streamlit */
+    .stButton > button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+
+    .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .stButton > button:hover::before {
+        width: 300px;
+        height: 300px;
     }
 
     /* Поддержка тёмной темы */
@@ -209,6 +377,11 @@ st.markdown("""
         .typical-day-text {
             background: rgba(102, 126, 234, 0.1);
         }
+    }
+
+    /* Fade-in для всей страницы */
+    .main .block-container {
+        animation: fadeIn 0.5s ease-out;
     }
 </style>
 """, unsafe_allow_html=True)

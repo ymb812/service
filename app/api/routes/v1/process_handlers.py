@@ -41,7 +41,7 @@ async def health_check():
         }
 
 
-@router.post("/api/start", response_model=ClarificationResponse, status_code=status.HTTP_200_OK)
+@router.post("/start", response_model=ClarificationResponse, status_code=status.HTTP_200_OK)
 async def start_session(request: InitialQueryRequest):
     """
     Шаг 1: Пользователь задаёт вопрос о профессии
@@ -71,7 +71,7 @@ async def start_session(request: InitialQueryRequest):
         )
 
 
-@router.post("/api/answer", response_model=CareerProfileResponse, status_code=status.HTTP_200_OK)
+@router.post("/answer", response_model=CareerProfileResponse, status_code=status.HTTP_200_OK)
 async def answer_clarification(request: FinalAnswerRequest):
     """
     Шаг 2: Пользователь отвечает на уточняющий вопрос
@@ -132,7 +132,7 @@ async def answer_clarification(request: FinalAnswerRequest):
         )
 
 
-@router.get("/api/session/{session_id}", response_model=CareerProfileResponse)
+@router.get("/session/{session_id}", response_model=CareerProfileResponse)
 async def get_session_result(session_id: int):
     """
     Получить результат по ID сессии

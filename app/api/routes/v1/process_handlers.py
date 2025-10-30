@@ -69,9 +69,12 @@ async def start_session(request: InitialQueryRequest):
             )
 
         # Профессия реальная - начинаем уточнения
+        # Передаем исходный запрос как контекст
         first_question = await llm_service.generate_profession_detail_question(
-            profession_check['profession_name'],
-            question_number=1
+            profession_name=profession_check['profession_name'],
+            question_number=1,
+            initial_context=request.user_message,
+            previous_qa=[]
         )
 
         session = await Session.create(
@@ -128,9 +131,12 @@ async def answer_clarification(request: FinalAnswerRequest):
             session.identified_profession = request.answer
             session.clarification_stage = "profession_details"
 
+            # Передаем исходный запрос и выбранную профессию как контекст
             first_question = await llm_service.generate_profession_detail_question(
-                request.answer,
-                question_number=1
+                profession_name=request.answer,
+                question_number=1,
+                initial_context=f"{session.initial_message} (выбрана профессия: {request.answer})",
+                previous_qa=[]
             )
 
             await session.save()
@@ -149,17 +155,18 @@ async def answer_clarification(request: FinalAnswerRequest):
                 history[-1]['answer'] = request.answer
             else:
                 # Первый ответ - сохраняем вопрос из предыдущего шага
-                # (в реальности нужно сохранять вопрос при создании, упростим)
                 history.append({"question": "Детали профессии", "answer": request.answer})
 
             session.clarification_history = history
 
             # Проверяем, нужны ли ещё вопросы (максимум 3)
             if len(history) < 3:
-                # Задаём следующий вопрос
+                # Задаём следующий вопрос с учетом контекста
                 next_question = await llm_service.generate_profession_detail_question(
-                    session.identified_profession,
-                    question_number=len(history) + 1
+                    profession_name=session.identified_profession,
+                    question_number=len(history) + 1,
+                    initial_context=session.initial_message,
+                    previous_qa=history  # Передаем всю историю Q&A
                 )
 
                 # Добавляем новый вопрос в историю

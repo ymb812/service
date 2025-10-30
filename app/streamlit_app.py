@@ -15,13 +15,13 @@ HEADERS = {
 
 # Настройка страницы
 st.set_page_config(
-    page_title="IT Career Explorer",
+    page_title="Career Explorer",
     page_icon="💼",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Кастомные стили (оставляем как есть)
+# Кастомные стили
 st.markdown("""
 <style>
     .main-title {
@@ -32,17 +32,18 @@ st.markdown("""
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .subtitle {
         text-align: center;
-        color: #666;
+        color: #888;
         font-size: 1.2rem;
         margin-bottom: 3rem;
     }
 
     .card {
-        background: #f8f9fa;
+        background: rgba(102, 126, 234, 0.1);
         padding: 1.5rem;
         border-radius: 10px;
         border-left: 4px solid #667eea;
@@ -50,41 +51,53 @@ st.markdown("""
     }
 
     .card h4 {
-        color: #2c3e50;
+        color: inherit;
         margin: 0;
     }
 
     .alternative-card {
-        background: white;
+        background: rgba(102, 126, 234, 0.05);
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
         cursor: pointer;
-        transition: transform 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
         border-left: 3px solid #667eea;
     }
 
     .alternative-card:hover {
         transform: translateX(5px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
     }
 
     .case-card {
-        background: white;
+        background: rgba(40, 167, 69, 0.1);
         padding: 1.5rem;
         border-radius: 10px;
         margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         border-left: 4px solid #28a745;
     }
 
     .case-card.medium {
+        background: rgba(255, 193, 7, 0.1);
         border-left-color: #ffc107;
     }
 
     .case-card.hard {
+        background: rgba(220, 53, 69, 0.1);
         border-left-color: #dc3545;
+    }
+
+    .case-card h4 {
+        color: inherit;
+        margin-top: 0.5rem;
+    }
+
+    .case-card p {
+        color: inherit;
+        margin-bottom: 0;
     }
 
     .difficulty-badge {
@@ -97,18 +110,18 @@ st.markdown("""
     }
 
     .difficulty-easy {
-        background: #d4edda;
-        color: #155724;
+        background: #28a745;
+        color: white;
     }
 
     .difficulty-medium {
-        background: #fff3cd;
-        color: #856404;
+        background: #ffc107;
+        color: #000;
     }
 
     .difficulty-hard {
-        background: #f8d7da;
-        color: #721c24;
+        background: #dc3545;
+        color: white;
     }
 
     .tech-badge {
@@ -123,16 +136,16 @@ st.markdown("""
     }
 
     .sound-item {
-        background: #fff3cd;
+        background: rgba(255, 193, 7, 0.2);
         padding: 0.8rem;
         border-radius: 8px;
         margin: 0.5rem 0;
         border-left: 3px solid #ffc107;
-        color: #856404;
+        color: inherit;
     }
 
     .progress-indicator {
-        background: #e9ecef;
+        background: rgba(102, 126, 234, 0.1);
         border-radius: 10px;
         padding: 1rem;
         margin: 1rem 0;
@@ -147,13 +160,55 @@ st.markdown("""
     }
 
     .typical-day-text {
-        background: white;
+        background: rgba(102, 126, 234, 0.05);
         padding: 1.5rem;
         border-radius: 10px;
         border-left: 4px solid #667eea;
         line-height: 1.8;
-        color: #2c3e50;
+        color: inherit;
         margin: 1rem 0;
+    }
+
+    .divider-text {
+        text-align: center;
+        color: #999;
+        margin: 1.5rem 0;
+        font-size: 0.9rem;
+    }
+
+    /* Поддержка тёмной темы */
+    @media (prefers-color-scheme: dark) {
+        .subtitle {
+            color: #aaa;
+        }
+
+        .card {
+            background: rgba(102, 126, 234, 0.15);
+        }
+
+        .alternative-card {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .case-card {
+            background: rgba(40, 167, 69, 0.15);
+        }
+
+        .case-card.medium {
+            background: rgba(255, 193, 7, 0.15);
+        }
+
+        .case-card.hard {
+            background: rgba(220, 53, 69, 0.15);
+        }
+
+        .sound-item {
+            background: rgba(255, 193, 7, 0.25);
+        }
+
+        .typical-day-text {
+            background: rgba(102, 126, 234, 0.1);
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -251,7 +306,7 @@ def get_difficulty_class(difficulty: str) -> str:
 
 # Заголовок
 st.markdown('<div class="main-title">🚀 Career Explorer</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Узнай вайб различных IT-профессий</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Узнай вайб различных профессий</div>', unsafe_allow_html=True)
 
 # Проверка API
 with st.sidebar:
@@ -290,17 +345,18 @@ if st.session_state.step == 'initial':
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        st.markdown("### 💬 О какой IT-профессии вы хотите узнать?")
+        st.markdown("### 💬 О какой профессии вы хотите узнать?")
 
         # Примеры вопросов
         with st.expander("💡 Примеры вопросов"):
             st.markdown("""
             - Каково это — быть frontend-разработчиком в стартапе?
             - Что делает DevOps-инженер в крупной компании?
-            - Как работает Data Scientist в продуктовой команде?
-            - Расскажи про карьеру QA-автоматизатора
-            - Хочу быть backend-разработчиком
-            - Интересует ML-инженер в финтехе
+            - Хочу быть врачом-хирургом
+            - Расскажи про профессию учителя математики
+            - Интересует работа журналиста в СМИ
+            - Как работает шеф-повар в ресторане?
+            - Что делает маркетолог в digital-агентстве?
             """)
 
         user_question = st.text_area(
@@ -345,11 +401,13 @@ elif st.session_state.step == 'clarification':
             st.markdown(f"**{st.session_state.current_question}**")
             st.markdown("---")
 
+            st.markdown("#### Выберите из предложенных:")
+
             for alt in st.session_state.alternatives:
                 if st.button(
-                    f"🎯 {alt}",
-                    key=f"alt_{alt}",
-                    use_container_width=True
+                        f"🎯 {alt}",
+                        key=f"alt_{alt}",
+                        use_container_width=True
                 ):
                     with st.spinner("⏳ Обрабатываю выбор..."):
                         try:
@@ -362,6 +420,40 @@ elif st.session_state.step == 'clarification':
                                 st.session_state.step = 'result'
                             else:
                                 # Это следующий вопрос
+                                st.session_state.current_question = result['question']
+                                st.session_state.current_stage = result['stage']
+                                st.session_state.alternatives = result.get('alternatives')
+
+                                if result['stage'] == 'profession_details':
+                                    st.session_state.question_count += 1
+
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Ошибка: {str(e)}")
+
+            # Добавляем разделитель
+            st.markdown('<div class="divider-text">— или введите свой вариант —</div>', unsafe_allow_html=True)
+
+            # Поле для ввода своего варианта
+            custom_profession = st.text_input(
+                "Или введите другую профессию:",
+                placeholder="Например: Архитектор, Психолог, Data Scientist...",
+                key="custom_profession_input"
+            )
+
+            if st.button("✍️ Выбрать свой вариант", type="secondary", use_container_width=True):
+                if len(custom_profession.strip()) < 3:
+                    st.error("⚠️ Название профессии слишком короткое")
+                else:
+                    with st.spinner("⏳ Обрабатываю ваш вариант..."):
+                        try:
+                            result = submit_answer(st.session_state.session_id, custom_profession)
+
+                            # Проверяем, вернулся ли профиль или следующий вопрос
+                            if 'position_title' in result:
+                                st.session_state.profile = result
+                                st.session_state.step = 'result'
+                            else:
                                 st.session_state.current_question = result['question']
                                 st.session_state.current_stage = result['stage']
                                 st.session_state.alternatives = result.get('alternatives')
@@ -458,12 +550,12 @@ elif st.session_state.step == 'result':
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("### 🛠️ Технологический стек")
+            st.markdown("### 🛠️ Инструменты и навыки")
             for tech in profile['tech_stack']:
                 st.markdown(f'<span class="tech-badge">{tech}</span>', unsafe_allow_html=True)
 
         with col2:
-            st.markdown("### 🎨 Что увидишь на экране")
+            st.markdown("### 🎨 Что увидишь в работе")
             for visual in profile['visual']:
                 st.markdown(f"- {visual}")
 

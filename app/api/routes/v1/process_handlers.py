@@ -46,11 +46,9 @@ async def start_session(request: InitialQueryRequest):
     Проверяем реальность профессии
     """
     try:
-        # Проверяем реальность профессии
         profession_check = await llm_service.check_profession_reality(request.user_message)
 
         if not profession_check['is_real']:
-            # Профессия нереальная - предлагаем альтернативы
             session = await Session.create(
                 user_id=request.user_id,
                 initial_message=request.user_message,
@@ -69,7 +67,6 @@ async def start_session(request: InitialQueryRequest):
             )
 
         # Профессия реальная - начинаем уточнения
-        # Передаем исходный запрос как контекст
         first_question = await llm_service.generate_profession_detail_question(
             profession_name=profession_check['profession_name'],
             question_number=1,
@@ -82,7 +79,7 @@ async def start_session(request: InitialQueryRequest):
             initial_message=request.user_message,
             identified_profession=profession_check['profession_name'],
             clarification_stage="profession_details",
-            clarification_history=[],
+            clarification_history=[{"question": first_question, "answer": None}],  # ✅ Вот здесь!
             status="waiting_answer"
         )
 
@@ -127,11 +124,9 @@ async def answer_clarification(request: FinalAnswerRequest):
 
         # === Обработка выбора альтернативной профессии ===
         if stage == "profession_alternatives":
-            # Пользователь выбрал одну из предложенных профессий
             session.identified_profession = request.answer
             session.clarification_stage = "profession_details"
 
-            # Передаем исходный запрос и выбранную профессию как контекст
             first_question = await llm_service.generate_profession_detail_question(
                 profession_name=request.answer,
                 question_number=1,
@@ -139,6 +134,8 @@ async def answer_clarification(request: FinalAnswerRequest):
                 previous_qa=[]
             )
 
+            history.append({"question": first_question, "answer": None})
+            session.clarification_history = history
             await session.save()
 
             return ClarificationResponse(
@@ -150,12 +147,12 @@ async def answer_clarification(request: FinalAnswerRequest):
 
         # === Уточнение деталей профессии (до 2 вопросов) ===
         if stage == "profession_details":
-            # Добавляем последний ответ в историю
-            if history:
+            if history and history[-1]['answer'] is None:
                 history[-1]['answer'] = request.answer
             else:
-                # Первый ответ - сохраняем вопрос из предыдущего шага
-                history.append({"question": "Детали профессии", "answer": request.answer})
+                # Это не должно случаться, но на всякий случай
+                logger.warning(f"Unexpected state: history={history}, answer={request.answer}")
+                history.append({"question": "Unknown question", "answer": request.answer})
 
             session.clarification_history = history
 
@@ -166,10 +163,10 @@ async def answer_clarification(request: FinalAnswerRequest):
                     profession_name=session.identified_profession,
                     question_number=len(history) + 1,
                     initial_context=session.initial_message,
-                    previous_qa=history  # Передаем всю историю Q&A
+                    previous_qa=history  # ✅ Теперь здесь правильные вопросы
                 )
 
-                # Добавляем новый вопрос в историю
+                # ✅ ИСПРАВЛЕНИЕ: добавляем новый вопрос с его реальным текстом
                 history.append({"question": next_question, "answer": None})
                 session.clarification_history = history
                 await session.save()
@@ -240,6 +237,7 @@ async def answer_clarification(request: FinalAnswerRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing answer: {str(e)}"
         )
+
 
 
 @router.get("/session/{session_id}", response_model=CareerProfileResponse)

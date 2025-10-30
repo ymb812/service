@@ -49,22 +49,33 @@ st.markdown("""
         margin: 1rem 0;
     }
 
+    .card h4 {
+        color: #2c3e50;
+        margin: 0;
+    }
+
     .schedule-item {
         background: white;
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        color: #2c3e50;
+    }
+
+    .schedule-item strong {
+        color: #667eea;
     }
 
     .tech-badge {
         display: inline-block;
         background: #667eea;
-        color: black;
+        color: white;
         padding: 0.3rem 0.8rem;
         border-radius: 20px;
         margin: 0.2rem;
         font-size: 0.9rem;
+        font-weight: 500;
     }
 
     .sound-item {
@@ -73,6 +84,7 @@ st.markdown("""
         border-radius: 8px;
         margin: 0.5rem 0;
         border-left: 3px solid #ffc107;
+        color: #856404;
     }
 </style>
 """, unsafe_allow_html=True)

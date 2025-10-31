@@ -519,13 +519,14 @@ def get_stage_label(stage: str) -> str:
     return labels.get(stage, 'Уточнение')
 
 
-# Заголовок приложения
-st.markdown('''
-<div class="app-header">
-    <div class="app-title">🎯 Career Explorer</div>
-    <div class="app-subtitle">Узнай реальный вайб различных профессий</div>
-</div>
-''', unsafe_allow_html=True)
+# Заголовок приложения (показываем только НЕ на странице результата)
+if st.session_state.step != 'result':
+    st.markdown('''
+    <div class="app-header">
+        <div class="app-title">🎯 Career Explorer</div>
+        <div class="app-subtitle">Узнай реальный вайб различных профессий</div>
+    </div>
+    ''', unsafe_allow_html=True)
 
 # Сайдбар
 with st.sidebar:
@@ -701,7 +702,134 @@ elif st.session_state.step == 'result':
         st.markdown(f"## 🎯 {profile['position_title']}")
         st.divider()
 
-        # Ключевые метрики (кастомные карточки вместо st.metric)
+        # ============================================================
+        # БЛОК 1: ВАЙБ ПРОФЕССИИ
+        # ============================================================
+        st.markdown('''
+        <div style="text-align: center; margin: 2rem 0;">
+            <h2 style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">
+                ✨ Вайб профессии
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">
+                Атмосфера и ощущения от работы
+            </p>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        # Главная польза (расширенный дизайн)
+        st.markdown(f'''
+        <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+                    border: 2px solid var(--primary-border);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    margin: 1.5rem 0;
+                    text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">💎</div>
+            <div style="font-size: 1.3rem; font-weight: 600; color: var(--primary); margin-bottom: 0.75rem;">
+                Главная ценность профессии
+            </div>
+            <div style="font-size: 1.1rem; line-height: 1.7; color: #2c3e50;">
+                {profile['benefit']}
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        # Типичный день
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📅 Типичный рабочий день</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Как выглядит твой день от утреннего кофе до вечера</p>',
+            unsafe_allow_html=True)
+
+        # Получаем изображения из профиля или используем дефолтные
+        day_images = profile.get('day_images', [
+            "https://im.runware.ai/image/ws/2/ii/ff54db2f-e0d2-4877-b0af-b2590726b8f6.jpg",
+            "https://im.runware.ai/image/ws/2/ii/9d30009a-3ef0-4d80-8934-4e5e962d1852.jpg",
+            "https://im.runware.ai/image/ws/2/ii/721af4ac-0ae9-41da-aad3-abd8c110cfef.jpg"
+        ])
+
+        # Создаём две колонки
+        col_text, col_images = st.columns([1.8, 1])
+
+        with col_text:
+            st.markdown(f'<div class="day-description">{profile["typical_day"]}</div>', unsafe_allow_html=True)
+
+        with col_images:
+            # Используем st.container с height для прокрутки
+            with st.container(height=600):
+                for idx, img_url in enumerate(day_images, 1):
+                    st.image(
+                        img_url,
+                        use_container_width=True,
+                    )
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Атмосфера рабочего дня (бывшие "Звуки")
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🎧 Атмосфера рабочего дня</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что создаёт настроение и ритм твоего дня</p>',
+            unsafe_allow_html=True)
+
+        sounds_html = '<div class="sounds-grid">'
+        for sound in profile['sounds']:
+            sounds_html += f'<div class="sound-item">{sound}</div>'
+        sounds_html += '</div>'
+
+        st.markdown(sounds_html, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Диалоги с коллегами
+        if 'chat_examples' in profile and profile['chat_examples']:
+            st.markdown('<div class="section">', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">💬 Живое общение с коллегами</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Реальные диалоги, которые показывают стиль коммуникации</p>',
+                unsafe_allow_html=True)
+
+            for chat in profile['chat_examples'][:2]:
+                st.markdown(f'''
+                <div class="dialog-card">
+                    <div class="dialog-header">👤 {chat['colleague']}</div>
+                    <div class="dialog-message dialog-request">
+                        <strong>📨 Запрос:</strong><br>
+                        {chat['request']}
+                    </div>
+                    <div class="dialog-message dialog-response">
+                        <strong>💬 Твой ответ:</strong><br>
+                        {chat['your_response']}
+                    </div>
+                    <div class="dialog-vibe">💭 {chat['vibe']}</div>
+                </div>
+                ''', unsafe_allow_html=True)
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # ============================================================
+        # РАЗДЕЛИТЕЛЬ МЕЖДУ БЛОКАМИ
+        # ============================================================
+        st.markdown('''
+        <div style="margin: 4rem 0 3rem 0; text-align: center;">
+            <hr style="border: none; border-top: 2px solid var(--primary-border); margin-bottom: 2rem;">
+            <div style="display: inline-block; background: white; padding: 1rem 2rem; border-radius: 50px; 
+                        border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);">
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;">📊</span>
+                <span style="font-size: 1.3rem; font-weight: 600; color: var(--primary);">
+                    Технические детали
+                </span>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        # ============================================================
+        # БЛОК 2: ТЕХНИЧЕСКИЕ ДЕТАЛИ
+        # ============================================================
+
+        # Ключевые метрики
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📈 Ключевые показатели</div>', unsafe_allow_html=True)
+
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -728,77 +856,14 @@ elif st.session_state.step == 'result':
             </div>
             ''', unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Главная польза
-        st.info(f"**💎 Главная ценность:** {profile['benefit']}")
-
-        # Звуки рабочего дня
-        st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">🔊 Звуки рабочего дня</div>', unsafe_allow_html=True)
-
-        sounds_html = '<div class="sounds-grid">'
-        for sound in profile['sounds']:
-            sounds_html += f'<div class="sound-item">{sound}</div>'
-        sounds_html += '</div>'
-
-        st.markdown(sounds_html, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # Типичный день
-        st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">📅 Типичный рабочий день</div>', unsafe_allow_html=True)
-
-        # Получаем изображения из профиля или используем дефолтные
-        day_images = profile.get('day_images', [
-            "https://im.runware.ai/image/ws/2/ii/ff54db2f-e0d2-4877-b0af-b2590726b8f6.jpg",
-            "https://im.runware.ai/image/ws/2/ii/9d30009a-3ef0-4d80-8934-4e5e962d1852.jpg",
-            "https://im.runware.ai/image/ws/2/ii/721af4ac-0ae9-41da-aad3-abd8c110cfef.jpg"
-        ])
-
-        # Создаём две колонки
-        col_text, col_images = st.columns([1.8, 1])
-
-        with col_text:
-            st.markdown(f'<div class="day-description">{profile["typical_day"]}</div>', unsafe_allow_html=True)
-
-        with col_images:
-            # Используем st.container с height для прокрутки
-            with st.container(height=600):
-                for idx, img_url in enumerate(day_images, 1):
-                    st.image(
-                        img_url,
-                        use_container_width=True,
-                    )
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Диалоги с коллегами
-        if 'chat_examples' in profile and profile['chat_examples']:
-            st.markdown('<div class="section">', unsafe_allow_html=True)
-            st.markdown('<div class="section-title">💬 Диалоги с коллегами</div>', unsafe_allow_html=True)
-
-            for chat in profile['chat_examples'][:2]:
-                st.markdown(f'''
-                <div class="dialog-card">
-                    <div class="dialog-header">👤 {chat['colleague']}</div>
-                    <div class="dialog-message dialog-request">
-                        <strong>📨 Запрос:</strong><br>
-                        {chat['request']}
-                    </div>
-                    <div class="dialog-message dialog-response">
-                        <strong>💬 Твой ответ:</strong><br>
-                        {chat['your_response']}
-                    </div>
-                    <div class="dialog-vibe">💭 {chat['vibe']}</div>
-                </div>
-                ''', unsafe_allow_html=True)
-
-            st.markdown('</div>', unsafe_allow_html=True)
 
         # Реальные задачи
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">🎯 Реальные задачи</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что именно ты будешь делать каждый день</p>',
+            unsafe_allow_html=True)
 
         difficulty_config = {
             "easy": {"emoji": "🟢", "label": "ЛЕГКО"},
@@ -828,6 +893,8 @@ elif st.session_state.step == 'result':
         with col1:
             st.markdown('<div class="section">', unsafe_allow_html=True)
             st.markdown('<div class="section-title">🛠️ Технологии</div>', unsafe_allow_html=True)
+            st.markdown('<p style="color: var(--text-secondary); margin-bottom: 1rem;">Инструменты твоей работы</p>',
+                        unsafe_allow_html=True)
 
             tech_html = '<div class="tech-tags">'
             for tech in profile['tech_stack']:
@@ -839,7 +906,9 @@ elif st.session_state.step == 'result':
 
         with col2:
             st.markdown('<div class="section">', unsafe_allow_html=True)
-            st.markdown('<div class="section-title">🎨 Что увидишь</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">🎨 Рабочее окружение</div>', unsafe_allow_html=True)
+            st.markdown('<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что будет на твоём экране</p>',
+                        unsafe_allow_html=True)
 
             visual_html = '<div class="styled-list"><ul>'
             for visual in profile['visual']:
@@ -850,8 +919,11 @@ elif st.session_state.step == 'result':
             st.markdown('</div>', unsafe_allow_html=True)
 
         # Честно о профессии
-        st.divider()
-        st.markdown("### 💬 Честно о профессии")
+        st.markdown('<div class="section">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">💬 Честно о профессии</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Взвешенный взгляд на плюсы и минусы</p>',
+            unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
 
@@ -862,6 +934,8 @@ elif st.session_state.step == 'result':
         with col2:
             cons = profile.get('cons', 'Дедлайны, правки, стресс')
             st.warning(f"**⚠️ К чему готовиться**\n\n{cons}")
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Кнопка для нового поиска
         st.divider()

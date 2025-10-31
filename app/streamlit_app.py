@@ -5,6 +5,7 @@ import requests
 from typing import Optional
 from settings.settings import settings
 import random
+from pathlib import Path
 
 # Конфигурация
 API_BASE_URL = "http://localhost:8000/api/v1"
@@ -148,19 +149,32 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
     }
 
-    /* Типичный день */
-    .day-description {
-        background: white;
+    /* Аудио-плеер карточка */
+    .audio-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
         border: 1px solid var(--primary-border);
-        border-left: 4px solid var(--primary);
-        border-radius: var(--border-radius);
-        padding: var(--spacing);
-        line-height: 1.8;
-        font-size: 1.05rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        min-height: 400px;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        text-align: center;
+    }
+
+    .audio-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .audio-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+
+    .audio-filename {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
     }
 
     /* Типичный день */
@@ -175,24 +189,24 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         white-space: pre-wrap;
         word-wrap: break-word;
-        height: 600px; /* Фиксированная высота */
-        overflow-y: auto; /* Прокрутка, если текст длинный */
+        height: 600px;
+        overflow-y: auto;
     }
-    
+
     .day-description::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .day-description::-webkit-scrollbar-track {
         background: var(--primary-light);
         border-radius: 3px;
     }
-    
+
     .day-description::-webkit-scrollbar-thumb {
         background: var(--primary);
         border-radius: 3px;
     }
-    
+
     /* Стили для изображений в контейнере */
     [data-testid="stVerticalBlock"] img {
         border-radius: 8px;
@@ -200,12 +214,11 @@ st.markdown("""
         margin-bottom: 12px;
         transition: var(--transition);
     }
-    
+
     [data-testid="stVerticalBlock"] img:hover {
         transform: scale(1.02);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
-
 
     /* Диалоги */
     .dialog-card {
@@ -765,19 +778,52 @@ elif st.session_state.step == 'result':
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Атмосфера рабочего дня (бывшие "Звуки")
+        # Атмосфера рабочего дня
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Атмосфера рабочего дня</div>', unsafe_allow_html=True)
         st.markdown(
             '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что создаёт настроение и ритм твоего дня</p>',
             unsafe_allow_html=True)
 
-        sounds_html = '<div class="sounds-grid">'
-        for sound in profile['sounds']:
-            sounds_html += f'<div class="sound-item">{sound}</div>'
-        sounds_html += '</div>'
+        # Создаём две колонки для аудио и звуков
+        col_audio, col_sounds = st.columns([1, 1.5])
 
-        st.markdown(sounds_html, unsafe_allow_html=True)
+        with col_audio:
+            # Аудио-плеер
+            audio_folder = Path("audio")
+
+            if audio_folder.exists():
+                audio_files = list(audio_folder.glob("*.mp3")) + \
+                              list(audio_folder.glob("*.wav")) + \
+                              list(audio_folder.glob("*.ogg"))
+
+                if audio_files:
+                    selected_audio = random.choice(audio_files)
+
+                    st.markdown(f'''
+                    <div class="audio-card" style="margin: 0;">
+                        <div class="audio-icon"></div>
+                        <div class="audio-title" style="font-size: 1rem;">Послушай атмосферу</div>
+                    </div>
+                    ''', unsafe_allow_html=True)
+
+                    st.audio(str(selected_audio))
+                else:
+                    st.info("🎵 Аудиофайлы не найдены")
+            else:
+                st.info("📁 Папка с аудио не найдена")
+
+        with col_sounds:
+            # Визуальные элементы атмосферы
+            st.markdown('<div style="padding-top: 0.5rem;">', unsafe_allow_html=True)
+            sounds_html = '<div class="sounds-grid" style="margin-top: 0;">'
+            for sound in profile['sounds']:
+                sounds_html += f'<div class="sound-item">{sound}</div>'
+            sounds_html += '</div>'
+
+            st.markdown(sounds_html, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
         st.markdown('</div>', unsafe_allow_html=True)
 
         # Диалоги с коллегами
@@ -814,7 +860,7 @@ elif st.session_state.step == 'result':
             <hr style="border: none; border-top: 2px solid var(--primary-border); margin-bottom: 2rem;">
             <div style="display: inline-block; background: white; padding: 1rem 2rem; border-radius: 50px; 
                         border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);">
-                <span style="font-size: 1.5rem; margin-right: 0.5rem;"></span>
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;">⚙️</span>
                 <span style="font-size: 1.3rem; font-weight: 600; color: var(--primary);">
                     Технические детали
                 </span>

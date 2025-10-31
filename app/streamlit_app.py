@@ -149,14 +149,20 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
     }
 
-    /* Аудио-плеер карточка */
+    # Замените соответствующую часть CSS (начиная с /* Аудио-плеер карточка */)
+
+        /* Аудио-плеер карточка */
     .audio-card {
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
         border: 1px solid var(--primary-border);
         border-radius: 12px;
         padding: 1.5rem;
-        margin: 1.5rem 0;
         text-align: center;
+        height: 100%;
+        display: flex;
+        width: 30;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .audio-icon {
@@ -171,11 +177,16 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    .audio-filename {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        margin-bottom: 1rem;
+    /* Звуки - выравнивание */
+    .sounds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0;
+        align-content: center;
     }
+
+
 
     /* Типичный день */
     .day-description {
@@ -781,15 +792,9 @@ elif st.session_state.step == 'result':
         # Атмосфера рабочего дня
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Атмосфера рабочего дня</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что создаёт настроение и ритм твоего дня</p>',
-            unsafe_allow_html=True)
-
-        # Создаём две колонки для аудио и звуков
         col_audio, col_sounds = st.columns([1, 1.5])
 
         with col_audio:
-            # Аудио-плеер
             audio_folder = Path("audio")
 
             if audio_folder.exists():
@@ -801,9 +806,8 @@ elif st.session_state.step == 'result':
                     selected_audio = random.choice(audio_files)
 
                     st.markdown(f'''
-                    <div class="audio-card" style="margin: 0;">
-                        <div class="audio-icon"></div>
-                        <div class="audio-title" style="font-size: 1rem;">Послушай атмосферу</div>
+                    <div class="audio-card">
+                        <div class="audio-title">Послушай атмосферу</div>
                     </div>
                     ''', unsafe_allow_html=True)
 
@@ -814,15 +818,12 @@ elif st.session_state.step == 'result':
                 st.info("📁 Папка с аудио не найдена")
 
         with col_sounds:
-            # Визуальные элементы атмосферы
-            st.markdown('<div style="padding-top: 0.5rem;">', unsafe_allow_html=True)
-            sounds_html = '<div class="sounds-grid" style="margin-top: 0;">'
+            sounds_html = '<div class="sounds-grid">'
             for sound in profile['sounds']:
                 sounds_html += f'<div class="sound-item">{sound}</div>'
             sounds_html += '</div>'
 
             st.markdown(sounds_html, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
 

@@ -576,8 +576,8 @@ if st.session_state.step == 'initial':
     )
 
     if st.button("🔍 Узнать подробности", type="primary", use_container_width=True):
-        if len(user_question.strip()) < 10:
-            st.error("⚠️ Вопрос слишком короткий (минимум 10 символов)")
+        if len(user_question.strip()) < 5:
+            st.error("⚠️ Вопрос слишком короткий (минимум 5 символов)")
         else:
             with st.spinner("🔄 Анализирую профессию..."):
                 try:

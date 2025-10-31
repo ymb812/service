@@ -10,6 +10,7 @@ from api.schemas.v1.ai_models import (
     ChatExample,
 )
 from api.services.llm_manager import llm_service
+from api.services.runware_manager import RunwareManager
 from settings.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -217,6 +218,14 @@ async def answer_clarification(request: FinalAnswerRequest):
             session.clarification_stage = "completed"
             await session.save()
 
+            # Генерация изображений
+            runware_manager = RunwareManager()
+            day_images = []
+            for promt in profile_data["visual"]:
+                image = await runware_manager.generate_image(positive_prompt=promt)
+                day_images.append(image)
+                logger.info(f"Generated image: {image}")
+
             # Возвращаем профиль
             return CareerProfileResponse(
                 session_id=session.id,
@@ -229,6 +238,7 @@ async def answer_clarification(request: FinalAnswerRequest):
                 real_cases=[RealCaseExample(**case) for case in profile_data["real_cases"]],
                 tech_stack=profile_data["tech_stack"],
                 visual=profile_data["visual"],
+                day_images=day_images,
                 chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],  # ✅
                 created_at=session.created_at
             )
@@ -261,6 +271,14 @@ async def get_session_result(session_id: int):
 
     profile_data = session.result_data
 
+    # Генерация изображений
+    runware_manager = RunwareManager()
+    day_images = []
+    for promt in profile_data["visual"]:
+        image = await runware_manager.generate_image(positive_prompt=promt)
+        day_images.append(image)
+        logger.info(f"Generated image: {image}")
+
     return CareerProfileResponse(
         session_id=session.id,
         position_title=profile_data["position_title"],
@@ -272,6 +290,7 @@ async def get_session_result(session_id: int):
         real_cases=[RealCaseExample(**case) for case in profile_data["real_cases"]],
         tech_stack=profile_data["tech_stack"],
         visual=profile_data["visual"],
+        day_images=day_images,
         chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],  # ✅
         created_at=session.created_at
     )

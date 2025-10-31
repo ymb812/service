@@ -5,7 +5,7 @@ from datetime import datetime
 
 class InitialQueryRequest(BaseModel):
     """Первичный запрос пользователя"""
-    user_message: str = Field(..., min_length=10, max_length=500)
+    user_message: str = Field(..., min_length=5, max_length=500)
     user_id: Optional[int] = None
 
 
@@ -70,6 +70,7 @@ class CareerProfileResponse(BaseModel):
     tech_stack: List[str]
     visual: List[str]
     chat_examples: List[ChatExample]
+    day_images: List[str]
     created_at: datetime
 
     class Config:
@@ -90,7 +91,7 @@ class CareerProfileResponse(BaseModel):
                     }
                 ],
                 "tech_stack": ["Python", "PostgreSQL", "Redis"],
-                "visual": ["Дашборды Grafana", "Код в IDE"],
+                "visual": ["open laptop with tasks", "work of analytics", "a lot of notifications"],
                 "chat_examples": [
                     {
                         "colleague": "Лена (Product Manager)",

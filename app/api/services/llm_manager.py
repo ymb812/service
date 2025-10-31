@@ -236,7 +236,7 @@ class OllamaService:
 
     ---
 
-    Создай профиль в JSON:
+    Создай профиль в JSON (данные в visual на английском языке):
 
     {{
         "position_title": "Название + контекст (например: 'Junior Frontend-разработчик в стартапе финтеха')",
@@ -283,9 +283,9 @@ class OllamaService:
         ],
 
         "visual": [
-            "ЧТО увидишь на экране (например: 'Код в VS Code с темой Dracula')",
-            "ЧТО увидишь вокруг (например: 'Open space с 30 разработчиками, стол с двумя мониторами')",
-            "ЧТО увидишь в результате (например: 'Твоя кнопка на продакшене, которую нажимают 10К раз в день')"
+            "WHAT will you see in front of you (for example: 'Code in an application or building materials')",
+            "WHAT will you see around you (for example: 'An office or a street')",
+            "WHAT will you see as a result (for example: 'A completed task')"
         ],
 
         "chat_examples": [
@@ -344,7 +344,7 @@ class OllamaService:
 
     5. **visual** — описывай так, чтобы человек мог ПРЕДСТАВИТЬ картинку:
        - Плохо: "Рабочее место" ❌
-       - Хорошо: "MacBook Pro с наклейками, второй монитор 27', стол у окна с видом на город, наушники Sony WH-1000XM4 — без них в open space не выжить" ✅
+       - Хорошо: "MacBook Pro с наклейками, второй монитор 27', стол у окна с видом на город" ✅
 
     6. **chat_examples** — РЕАЛЬНЫЕ диалоги из рабочих чатов (Slack, Telegram, Teams):
        - Должно быть 2 примера

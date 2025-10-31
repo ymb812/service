@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, SecretStr, field_validator
 class APPSettings(BaseModel):
     prod_mode: bool = Field(alias='PROD_MODE', default=False)
     x_auth_token: SecretStr = Field(alias='X_AUTH_TOKEN')
+    runware_api_key: SecretStr = Field(alias='RUNWARE_API_KEY')
 
 
 class DataBaseConfigsModel(BaseModel):

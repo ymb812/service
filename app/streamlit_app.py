@@ -1,3 +1,5 @@
+# File: streamlit_app.py
+
 import streamlit as st
 import requests
 from typing import Optional
@@ -158,7 +160,52 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         white-space: pre-wrap;
         word-wrap: break-word;
+        min-height: 400px;
     }
+
+    /* Типичный день */
+    .day-description {
+        background: white;
+        border: 1px solid var(--primary-border);
+        border-left: 4px solid var(--primary);
+        border-radius: var(--border-radius);
+        padding: var(--spacing);
+        line-height: 1.8;
+        font-size: 1.05rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        height: 600px; /* Фиксированная высота */
+        overflow-y: auto; /* Прокрутка, если текст длинный */
+    }
+    
+    .day-description::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .day-description::-webkit-scrollbar-track {
+        background: var(--primary-light);
+        border-radius: 3px;
+    }
+    
+    .day-description::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 3px;
+    }
+    
+    /* Стили для изображений в контейнере */
+    [data-testid="stVerticalBlock"] img {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 12px;
+        transition: var(--transition);
+    }
+    
+    [data-testid="stVerticalBlock"] img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
 
     /* Диалоги */
     .dialog-card {
@@ -372,6 +419,10 @@ st.markdown("""
 
         .metric-value {
             font-size: 1.1rem;
+        }
+
+        .images-scroll-container {
+            max-height: 400px;
         }
     }
 
@@ -697,7 +748,29 @@ elif st.session_state.step == 'result':
         # Типичный день
         st.markdown('<div class="section">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">📅 Типичный рабочий день</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="day-description">{profile["typical_day"]}</div>', unsafe_allow_html=True)
+
+        # Получаем изображения из профиля или используем дефолтные
+        day_images = profile.get('day_images', [
+            "https://im.runware.ai/image/ws/2/ii/ff54db2f-e0d2-4877-b0af-b2590726b8f6.jpg",
+            "https://im.runware.ai/image/ws/2/ii/9d30009a-3ef0-4d80-8934-4e5e962d1852.jpg",
+            "https://im.runware.ai/image/ws/2/ii/721af4ac-0ae9-41da-aad3-abd8c110cfef.jpg"
+        ])
+
+        # Создаём две колонки
+        col_text, col_images = st.columns([1.8, 1])
+
+        with col_text:
+            st.markdown(f'<div class="day-description">{profile["typical_day"]}</div>', unsafe_allow_html=True)
+
+        with col_images:
+            # Используем st.container с height для прокрутки
+            with st.container(height=600):
+                for idx, img_url in enumerate(day_images, 1):
+                    st.image(
+                        img_url,
+                        use_container_width=True,
+                    )
+
         st.markdown('</div>', unsafe_allow_html=True)
 
         # Диалоги с коллегами

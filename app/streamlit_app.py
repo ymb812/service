@@ -533,11 +533,11 @@ with st.sidebar:
     st.markdown("### ⚙️ Настройки")
 
     if check_api_health():
-        st.success("✅ API доступен")
+        st.success("API доступен")
     else:
         st.error("❌ API недоступен")
 
-    if st.button("🔄 Начать заново", use_container_width=True):
+    if st.button("Начать заново", use_container_width=True):
         reset_session()
         st.rerun()
 
@@ -708,7 +708,7 @@ elif st.session_state.step == 'result':
         st.markdown('''
         <div style="text-align: center; margin: 2rem 0;">
             <h2 style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">
-                ✨ Вайб профессии
+                Вайб профессии
             </h2>
             <p style="color: var(--text-secondary); font-size: 1.1rem;">
                 Атмосфера и ощущения от работы
@@ -736,7 +736,7 @@ elif st.session_state.step == 'result':
 
         # Типичный день
         st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">📅 Типичный рабочий день</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Типичный рабочий день</div>', unsafe_allow_html=True)
         st.markdown(
             '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Как выглядит твой день от утреннего кофе до вечера</p>',
             unsafe_allow_html=True)
@@ -767,7 +767,7 @@ elif st.session_state.step == 'result':
 
         # Атмосфера рабочего дня (бывшие "Звуки")
         st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">🎧 Атмосфера рабочего дня</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Атмосфера рабочего дня</div>', unsafe_allow_html=True)
         st.markdown(
             '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что создаёт настроение и ритм твоего дня</p>',
             unsafe_allow_html=True)
@@ -783,7 +783,7 @@ elif st.session_state.step == 'result':
         # Диалоги с коллегами
         if 'chat_examples' in profile and profile['chat_examples']:
             st.markdown('<div class="section">', unsafe_allow_html=True)
-            st.markdown('<div class="section-title">💬 Живое общение с коллегами</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Живое общение с коллегами</div>', unsafe_allow_html=True)
             st.markdown(
                 '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Реальные диалоги, которые показывают стиль коммуникации</p>',
                 unsafe_allow_html=True)
@@ -814,7 +814,7 @@ elif st.session_state.step == 'result':
             <hr style="border: none; border-top: 2px solid var(--primary-border); margin-bottom: 2rem;">
             <div style="display: inline-block; background: white; padding: 1rem 2rem; border-radius: 50px; 
                         border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);">
-                <span style="font-size: 1.5rem; margin-right: 0.5rem;">📊</span>
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;"></span>
                 <span style="font-size: 1.3rem; font-weight: 600; color: var(--primary);">
                     Технические детали
                 </span>
@@ -828,7 +828,7 @@ elif st.session_state.step == 'result':
 
         # Ключевые метрики
         st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">📈 Ключевые показатели</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Ключевые показатели</div>', unsafe_allow_html=True)
 
         col1, col2, col3 = st.columns(3)
 
@@ -860,7 +860,7 @@ elif st.session_state.step == 'result':
 
         # Реальные задачи
         st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">🎯 Реальные задачи</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Реальные задачи</div>', unsafe_allow_html=True)
         st.markdown(
             '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что именно ты будешь делать каждый день</p>',
             unsafe_allow_html=True)
@@ -892,7 +892,7 @@ elif st.session_state.step == 'result':
 
         with col1:
             st.markdown('<div class="section">', unsafe_allow_html=True)
-            st.markdown('<div class="section-title">🛠️ Технологии</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Технологии</div>', unsafe_allow_html=True)
             st.markdown('<p style="color: var(--text-secondary); margin-bottom: 1rem;">Инструменты твоей работы</p>',
                         unsafe_allow_html=True)
 
@@ -906,7 +906,7 @@ elif st.session_state.step == 'result':
 
         with col2:
             st.markdown('<div class="section">', unsafe_allow_html=True)
-            st.markdown('<div class="section-title">🎨 Рабочее окружение</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Рабочее окружение</div>', unsafe_allow_html=True)
             st.markdown('<p style="color: var(--text-secondary); margin-bottom: 1rem;">Что будет на твоём экране</p>',
                         unsafe_allow_html=True)
 
@@ -920,7 +920,7 @@ elif st.session_state.step == 'result':
 
         # Честно о профессии
         st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">💬 Честно о профессии</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Честно о профессии</div>', unsafe_allow_html=True)
         st.markdown(
             '<p style="color: var(--text-secondary); margin-bottom: 1rem;">Взвешенный взгляд на плюсы и минусы</p>',
             unsafe_allow_html=True)
@@ -929,11 +929,11 @@ elif st.session_state.step == 'result':
 
         with col1:
             pros = profile.get('pros', 'Творчество, развитие, результат')
-            st.success(f"**✅ За что полюбишь**\n\n{pros}")
+            st.success(f"**За что полюбишь**\n\n{pros}")
 
         with col2:
             cons = profile.get('cons', 'Дедлайны, правки, стресс')
-            st.warning(f"**⚠️ К чему готовиться**\n\n{cons}")
+            st.warning(f"**К чему готовиться**\n\n{cons}")
 
         st.markdown('</div>', unsafe_allow_html=True)
 

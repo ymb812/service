@@ -81,7 +81,7 @@ async def start_session(request: InitialQueryRequest):
             initial_message=request.user_message,
             identified_profession=profession_check['profession_name'],
             clarification_stage="profession_details",
-            clarification_history=[{"question": first_question, "answer": None}],  # ✅ Вот здесь!
+            clarification_history=[{"question": first_question, "answer": None}],
             status="waiting_answer"
         )
 
@@ -165,10 +165,10 @@ async def answer_clarification(request: FinalAnswerRequest):
                     profession_name=session.identified_profession,
                     question_number=len(history) + 1,
                     initial_context=session.initial_message,
-                    previous_qa=history  # ✅ Теперь здесь правильные вопросы
+                    previous_qa=history
                 )
 
-                # ✅ ИСПРАВЛЕНИЕ: добавляем новый вопрос с его реальным текстом
+                # Добавляем новый вопрос с его реальным текстом
                 history.append({"question": next_question, "answer": None})
                 session.clarification_history = history
                 await session.save()
@@ -218,11 +218,16 @@ async def answer_clarification(request: FinalAnswerRequest):
             session.clarification_stage = "completed"
             await session.save()
 
+            # Переводим visual descriptions на английский для генерации изображений
+            translated_visual = await llm_service.translate_visual_to_english(profile_data["visual"])
+            print(translated_visual)
+            logger.info(f"Translated visual descriptions: {translated_visual}")
+
             # Генерация изображений
             runware_manager = RunwareManager()
             day_images = []
-            for promt in profile_data["visual"]:
-                image = await runware_manager.generate_image(positive_prompt=promt)
+            for prompt in translated_visual:
+                image = await runware_manager.generate_image(positive_prompt=prompt)
                 day_images.append(image)
                 logger.info(f"Generated image: {image}")
 
@@ -239,7 +244,7 @@ async def answer_clarification(request: FinalAnswerRequest):
                 tech_stack=profile_data["tech_stack"],
                 visual=profile_data["visual"],
                 day_images=day_images,
-                chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],  # ✅
+                chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],
                 created_at=session.created_at
             )
 
@@ -249,7 +254,6 @@ async def answer_clarification(request: FinalAnswerRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing answer: {str(e)}"
         )
-
 
 
 @router.get("/session/{session_id}", response_model=CareerProfileResponse)
@@ -271,11 +275,15 @@ async def get_session_result(session_id: int):
 
     profile_data = session.result_data
 
+    # Переводим visual descriptions на английский для генерации изображений
+    translated_visual = await llm_service.translate_visual_to_english(profile_data["visual"])
+    logger.info(f"Translated visual descriptions: {translated_visual}")
+
     # Генерация изображений
     runware_manager = RunwareManager()
     day_images = []
-    for promt in profile_data["visual"]:
-        image = await runware_manager.generate_image(positive_prompt=promt)
+    for prompt in translated_visual:
+        image = await runware_manager.generate_image(positive_prompt=prompt)
         day_images.append(image)
         logger.info(f"Generated image: {image}")
 
@@ -291,6 +299,6 @@ async def get_session_result(session_id: int):
         tech_stack=profile_data["tech_stack"],
         visual=profile_data["visual"],
         day_images=day_images,
-        chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],  # ✅
+        chat_examples=[ChatExample(**example) for example in profile_data["chat_examples"]],
         created_at=session.created_at
     )

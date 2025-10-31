@@ -434,6 +434,30 @@ class OllamaService:
 
         return data
 
+    async def translate_visual_to_english(self, visual_descriptions: list) -> list:
+        """
+        Переводит описания visual на английский язык для генерации изображений
+        """
+        prompt = f"""You are a professional translator. Translate the following visual descriptions from Russian to English.
+    Keep the descriptions concise and suitable for image generation prompts.
+
+    Visual descriptions:
+    {json.dumps(visual_descriptions, ensure_ascii=False, indent=2)}
+
+    Return exactly a JSON without markdown quotes in the same order:
+    ["English description 1", "English description 2", "English description 3"]
+    """
+
+        response = await self._generate(
+            prompt,
+            temperature=0.1,
+            num_predict=500,
+            stream=False
+        )
+
+        print(response)
+        return json.loads(response)
+
     async def close(self):
         """Закрытие клиента"""
         pass

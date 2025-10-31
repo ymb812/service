@@ -71,7 +71,6 @@ class CareerProfileResponse(BaseModel):
     visual: List[str]
     chat_examples: List[ChatExample]
     day_images: List[str]
-    audio_files: list[str]
     created_at: datetime
 
     class Config:
